@@ -16,6 +16,32 @@ class CardDetector:
         self.card_aspect_ratio = 0.714  # Standard MTG card aspect ratio (2.5" x 3.5")
         self.aspect_ratio_tolerance = 0.25
     
+    def _is_card_contour(self, contour) -> bool:
+        """
+        Check if a contour matches card dimensions.
+        
+        Args:
+            contour: OpenCV contour
+            
+        Returns:
+            True if contour matches card aspect ratio and size
+        """
+        area = cv2.contourArea(contour)
+        
+        # Skip small contours
+        if area < self.min_card_area:
+            return False
+        
+        # Get bounding rectangle
+        x, y, w, h = cv2.boundingRect(contour)
+        aspect_ratio = w / float(h) if h > 0 else 0
+        
+        # Check if aspect ratio matches a card (portrait or landscape)
+        is_portrait = abs(aspect_ratio - self.card_aspect_ratio) < self.aspect_ratio_tolerance
+        is_landscape = abs(aspect_ratio - (1 / self.card_aspect_ratio)) < self.aspect_ratio_tolerance
+        
+        return is_portrait or is_landscape
+    
     def detect_cards(self, image_path: str) -> List[np.ndarray]:
         """
         Detect cards in an image.
@@ -42,24 +68,13 @@ class CardDetector:
         # Filter and extract card regions
         card_images = []
         for contour in contours:
-            area = cv2.contourArea(contour)
-            
-            # Skip small contours
-            if area < self.min_card_area:
+            if not self._is_card_contour(contour):
                 continue
             
-            # Get bounding rectangle
+            # Get bounding rectangle and extract card region
             x, y, w, h = cv2.boundingRect(contour)
-            aspect_ratio = w / float(h) if h > 0 else 0
-            
-            # Check if aspect ratio matches a card (portrait or landscape)
-            is_portrait = abs(aspect_ratio - self.card_aspect_ratio) < self.aspect_ratio_tolerance
-            is_landscape = abs(aspect_ratio - (1 / self.card_aspect_ratio)) < self.aspect_ratio_tolerance
-            
-            if is_portrait or is_landscape:
-                # Extract the card region
-                card_image = image[y:y+h, x:x+w]
-                card_images.append(card_image)
+            card_image = image[y:y+h, x:x+w]
+            card_images.append(card_image)
         
         return card_images
     
@@ -89,21 +104,11 @@ class CardDetector:
         # Filter and extract bounding boxes
         boundaries = []
         for contour in contours:
-            area = cv2.contourArea(contour)
-            
-            # Skip small contours
-            if area < self.min_card_area:
+            if not self._is_card_contour(contour):
                 continue
             
             # Get bounding rectangle
             x, y, w, h = cv2.boundingRect(contour)
-            aspect_ratio = w / float(h) if h > 0 else 0
-            
-            # Check if aspect ratio matches a card
-            is_portrait = abs(aspect_ratio - self.card_aspect_ratio) < self.aspect_ratio_tolerance
-            is_landscape = abs(aspect_ratio - (1 / self.card_aspect_ratio)) < self.aspect_ratio_tolerance
-            
-            if is_portrait or is_landscape:
-                boundaries.append((x, y, w, h))
+            boundaries.append((x, y, w, h))
         
         return boundaries
