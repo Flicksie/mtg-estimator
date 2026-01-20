@@ -35,13 +35,25 @@ class PriceFetcher:
         
         # Extract available prices
         if prices.get('usd'):
-            result['usd'] = float(prices['usd'])
+            try:
+                result['usd'] = float(prices['usd'])
+            except (ValueError, TypeError):
+                pass
         if prices.get('usd_foil'):
-            result['usd_foil'] = float(prices['usd_foil'])
+            try:
+                result['usd_foil'] = float(prices['usd_foil'])
+            except (ValueError, TypeError):
+                pass
         if prices.get('eur'):
-            result['eur'] = float(prices['eur'])
+            try:
+                result['eur'] = float(prices['eur'])
+            except (ValueError, TypeError):
+                pass
         if prices.get('eur_foil'):
-            result['eur_foil'] = float(prices['eur_foil'])
+            try:
+                result['eur_foil'] = float(prices['eur_foil'])
+            except (ValueError, TypeError):
+                pass
         
         return result if result else None
     

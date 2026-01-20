@@ -5,9 +5,6 @@ Identifies MTG cards using the Scryfall API.
 import requests
 import numpy as np
 from typing import Optional, Dict, Any
-import base64
-import io
-from PIL import Image
 
 
 class CardRecognizer:
