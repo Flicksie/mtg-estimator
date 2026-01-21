@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}Card Search - MTG Card Estimator{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <h2 class="mb-4"><i class="bi bi-search"></i> Card Search</h2>
+        
+        <div class="card">
+            <div class="card-body">
+                <form id="searchForm">
+                    <div class="mb-3">
+                        <label for="cardName" class="form-label">Card Name</label>
+                        <input type="text" class="form-control form-control-lg" id="cardName" 
+                               placeholder="Enter card name (e.g., Lightning Bolt)" required>
+                        <div class="form-text">Enter the name of any Magic: The Gathering card</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg w-100" id="searchBtn">
+                        <i class="bi bi-search"></i> Search Card
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="loadingSpinner" class="text-center mt-4" style="display: none;">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Searching for card...</p>
+        </div>
+
+        <!-- Error Alert -->
+        <div id="errorAlert" class="alert alert-danger mt-4" style="display: none;" role="alert"></div>
+
+        <!-- Results -->
+        <div id="searchResults" class="mt-4" style="display: none;">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <img id="cardImage" class="img-fluid rounded" alt="Card image">
+                        </div>
+                        <div class="col-md-8">
+                            <h3 id="cardName"></h3>
+                            <p class="text-muted mb-2">
+                                <strong>Set:</strong> <span id="cardSet"></span><br>
+                                <strong>Type:</strong> <span id="cardType"></span>
+                            </p>
+                            <p id="cardMana" class="mb-2"></p>
+                            <div id="cardText" class="card-text mb-3"></div>
+                            
+                            <h5>Prices</h5>
+                            <div id="cardPrices" class="mb-3"></div>
+                            
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-success" id="addToCollectionBtn">
+                                    <i class="bi bi-plus-circle"></i> Add to Collection
+                                </button>
+                                <a id="scryfallLink" class="btn btn-outline-primary" target="_blank">
+                                    <i class="bi bi-box-arrow-up-right"></i> View on Scryfall
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('searchForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const cardName = document.getElementById('cardName').value.trim();
+    const searchBtn = document.getElementById('searchBtn');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const errorAlert = document.getElementById('errorAlert');
+    const searchResults = document.getElementById('searchResults');
+    
+    // Reset UI
+    searchBtn.disabled = true;
+    loadingSpinner.style.display = 'block';
+    errorAlert.style.display = 'none';
+    searchResults.style.display = 'none';
+    
+    try {
+        const response = await fetch('/api/search', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ query: cardName })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to search card');
+        }
+        
+        // Display results
+        displayCardResults(data);
+        
+    } catch (error) {
+        errorAlert.textContent = error.message;
+        errorAlert.style.display = 'block';
+    } finally {
+        searchBtn.disabled = false;
+        loadingSpinner.style.display = 'none';
+    }
+});
+
+function displayCardResults(card) {
+    const searchResults = document.getElementById('searchResults');
+    
+    // Set card image
+    document.getElementById('cardImage').src = card.image_uri || 'https://via.placeholder.com/250x350?text=No+Image';
+    
+    // Set card details
+    document.querySelector('#searchResults #cardName').textContent = card.name;
+    document.getElementById('cardSet').textContent = `${card.set} (${card.set_code})`;
+    document.getElementById('cardType').textContent = card.type_line || 'N/A';
+    document.getElementById('cardMana').innerHTML = card.mana_cost ? `<strong>Mana Cost:</strong> ${card.mana_cost}` : '';
+    document.getElementById('cardText').textContent = card.oracle_text || '';
+    
+    // Set prices
+    const pricesDiv = document.getElementById('cardPrices');
+    if (card.prices && Object.keys(card.prices).length > 0) {
+        let pricesHTML = '<div class="row">';
+        for (const [currency, price] of Object.entries(card.prices)) {
+            pricesHTML += `
+                <div class="col-6 mb-2">
+                    <strong>${currency.toUpperCase()}:</strong> $${price.toFixed(2)}
+                </div>
+            `;
+        }
+        pricesHTML += '</div>';
+        pricesDiv.innerHTML = pricesHTML;
+    } else {
+        pricesDiv.innerHTML = '<p class="text-muted">No pricing information available</p>';
+    }
+    
+    // Set Scryfall link
+    document.getElementById('scryfallLink').href = card.scryfall_uri;
+    
+    // Store card data for adding to collection
+    document.getElementById('addToCollectionBtn').onclick = function() {
+        addToCollection(card);
+    };
+    
+    // Show results
+    searchResults.style.display = 'block';
+}
+
+async function addToCollection(card) {
+    try {
+        const response = await fetch('/api/collection/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name: card.name,
+                set: card.set,
+                price: card.prices?.usd || 0,
+                image_uri: card.image_uri
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to add card to collection');
+        }
+        
+        alert('Card added to collection!');
+    } catch (error) {
+        alert('Error adding card to collection: ' + error.message);
+    }
+}
+</script>
+{% endblock %}
