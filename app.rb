@@ -4,6 +4,7 @@ require 'sinatra/base'
 require 'sinatra/json'
 require 'json'
 require 'fileutils'
+require 'securerandom'
 require_relative 'card_detector'
 require_relative 'card_recognizer'
 require_relative 'price_fetcher'
@@ -14,7 +15,7 @@ require_relative 'ocr_service'
 class MTGEstimatorApp < Sinatra::Base
   configure do
     enable :sessions
-    set :session_secret, ENV.fetch('SECRET_KEY', 'dev-secret-key-change-in-production')
+    set :session_secret, ENV.fetch('SECRET_KEY', SecureRandom.hex(64))
     set :port, 5000
     set :bind, '0.0.0.0'
     set :public_folder, 'public'
@@ -68,12 +69,18 @@ class MTGEstimatorApp < Sinatra::Base
     data = JSON.parse(request.body.read)
     query = data['query']&.strip
 
-    return json({ error: 'Please provide a card name to search' }), 400 if query.nil? || query.empty?
+    if query.nil? || query.empty?
+      status 400
+      return json({ error: 'Please provide a card name to search' })
+    end
 
     # Search for the card
     card_data = card_recognizer.search_card_by_name(query)
 
-    return json({ error: 'Card not found' }), 404 unless card_data
+    unless card_data
+      status 404
+      return json({ error: 'Card not found' })
+    end
 
     # Get price information
     prices = price_fetcher.get_card_price(card_data)
@@ -103,7 +110,10 @@ class MTGEstimatorApp < Sinatra::Base
   post '/api/scan' do
     content_type :json
 
-    return json({ error: 'No image file provided' }), 400 unless params[:image]
+    unless params[:image]
+      status 400
+      return json({ error: 'No image file provided' })
+    end
 
     begin
       file = params[:image]
@@ -166,7 +176,8 @@ class MTGEstimatorApp < Sinatra::Base
 
       json results
     rescue StandardError => e
-      json({ error: "Error processing image: #{e.message}" }), 500
+      status 500
+      json({ error: "Error processing image: #{e.message}" })
     end
   end
 
@@ -177,7 +188,10 @@ class MTGEstimatorApp < Sinatra::Base
     data = JSON.parse(request.body.read)
     card_names = data['card_names'] || []
 
-    return json({ error: 'No card names provided' }), 400 if card_names.empty?
+    if card_names.empty?
+      status 400
+      return json({ error: 'No card names provided' })
+    end
 
     results = []
     total_value = 0
@@ -250,7 +264,10 @@ class MTGEstimatorApp < Sinatra::Base
     content_type :json
 
     card_id = params[:card_id].to_i
-    return json({ error: 'Collection not found' }), 404 unless session[:collection]
+    unless session[:collection]
+      status 404
+      return json({ error: 'Collection not found' })
+    end
 
     session[:collection].reject! { |c| c['id'] == card_id }
 

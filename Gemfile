@@ -8,6 +8,7 @@ ruby "~> 3.2"
 gem "sinatra", "~> 4.0"
 gem "sinatra-contrib", "~> 4.0"
 gem "puma", "~> 6.4"
+gem "rackup", "~> 2.2"
 
 # HTTP client for API calls
 gem "httparty", "~> 0.22"
