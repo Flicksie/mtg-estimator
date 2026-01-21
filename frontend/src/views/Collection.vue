@@ -61,7 +61,7 @@
             </p>
           </div>
           <footer class="card-footer">
-            <a @click.prevent="removeCard(card.id!)" class="card-footer-item has-text-danger">
+            <a @click.prevent="card.id && removeCard(card.id)" class="card-footer-item has-text-danger">
               <span class="icon">
                 <i class="fas fa-trash"></i>
               </span>

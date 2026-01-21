@@ -10,6 +10,7 @@ export interface Card {
   oracle_text?: string;
   scryfall_uri?: string;
   added_date?: string;
+  found?: boolean;  // Used in scan/identify responses to indicate if card was found
 }
 
 export interface Prices {

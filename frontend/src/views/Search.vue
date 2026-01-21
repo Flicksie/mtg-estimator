@@ -59,7 +59,7 @@
               <tbody>
                 <tr v-for="(price, currency) in card.prices" :key="currency">
                   <td><strong>{{ currency.toString().toUpperCase() }}</strong></td>
-                  <td class="has-text-right">${{ price?.toFixed(2) }}</td>
+                  <td class="has-text-right">${{ (price ?? 0).toFixed(2) }}</td>
                 </tr>
               </tbody>
             </table>
