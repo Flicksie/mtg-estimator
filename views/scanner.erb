@@ -1,0 +1,249 @@
+<div id="scannerApp">
+    <h1 class="title">Card Scanner</h1>
+    <p class="subtitle">Upload images of your cards for automatic identification</p>
+
+    <div class="notification <%= @ocr_available ? 'is-info' : 'is-warning' %>">
+        <% if @ocr_available %>
+        <p>
+            <span class="icon"><i class="fas fa-info-circle"></i></span>
+            OCR is available! Upload card images and we'll try to identify them automatically.
+        </p>
+        <% else %>
+        <p>
+            <span class="icon"><i class="fas fa-exclamation-triangle"></i></span>
+            OCR is not available. You can still upload images and provide card names manually.
+        </p>
+        <% end %>
+    </div>
+
+    <div class="box">
+        <div class="file has-name is-boxed is-large is-fullwidth">
+            <label class="file-label">
+                <input 
+                    class="file-input" 
+                    type="file" 
+                    @change="onFileSelected"
+                    accept="image/*">
+                <span class="file-cta">
+                    <span class="file-icon">
+                        <i class="fas fa-upload"></i>
+                    </span>
+                    <span class="file-label">
+                        Choose a file…
+                    </span>
+                </span>
+                <span class="file-name" v-if="selectedFile">
+                    {{ selectedFile.name }}
+                </span>
+            </label>
+        </div>
+
+        <button 
+            @click="uploadImage" 
+            :class="['button', 'is-primary', 'is-large', 'is-fullwidth', 'mt-3', { 'is-loading': uploading }]"
+            :disabled="!selectedFile || uploading">
+            <span class="icon">
+                <i class="fas fa-camera"></i>
+            </span>
+            <span>Scan Image</span>
+        </button>
+
+        <div v-if="error" class="notification is-danger mt-3">
+            <button @click="error = null" class="delete"></button>
+            {{ error }}
+        </div>
+
+        <div v-if="results" class="mt-5">
+            <h2 class="title is-4">Scan Results</h2>
+            <p class="subtitle is-6">Detected {{ results.num_detected }} card(s)</p>
+
+            <div v-if="results.message" class="notification is-warning">
+                {{ results.message }}
+            </div>
+
+            <div class="field" v-if="results.num_detected > 0 && results.cards.length === 0">
+                <label class="label">Enter card names (one per line)</label>
+                <div class="control">
+                    <textarea 
+                        v-model="manualCardNames"
+                        class="textarea" 
+                        placeholder="Lightning Bolt&#10;Counterspell&#10;Dark Ritual"
+                        rows="5"></textarea>
+                </div>
+                <button 
+                    @click="identifyCards"
+                    :class="['button', 'is-primary', 'mt-3', { 'is-loading': identifying }]"
+                    :disabled="!manualCardNames || identifying">
+                    <span class="icon">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <span>Identify Cards</span>
+                </button>
+            </div>
+
+            <div v-if="identifiedCards.length > 0" class="mt-4">
+                <h3 class="title is-5">Identified Cards</h3>
+                
+                <div class="columns is-multiline">
+                    <div v-for="card in identifiedCards" :key="card.name" class="column is-one-third">
+                        <div class="card">
+                            <div class="card-image" v-if="card.image_uri">
+                                <figure class="image is-4by3">
+                                    <img :src="card.image_uri" :alt="card.name">
+                                </figure>
+                            </div>
+                            <div class="card-content">
+                                <p class="title is-5">{{ card.name }}</p>
+                                <p class="subtitle is-6" v-if="card.set">{{ card.set }}</p>
+                                <p class="has-text-weight-bold has-text-success" v-if="card.price">
+                                    ${{ card.price.toFixed(2) }}
+                                </p>
+                                <p class="has-text-danger" v-else-if="card.error">
+                                    {{ card.error }}
+                                </p>
+                                <button 
+                                    @click="addToCollection(card)"
+                                    class="button is-small is-success is-fullwidth mt-2"
+                                    v-if="card.found !== false">
+                                    <span class="icon">
+                                        <i class="fas fa-plus"></i>
+                                    </span>
+                                    <span>Add to Collection</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="notification is-success is-light mt-4">
+                    <p class="title is-5">Total Estimated Value</p>
+                    <p class="title is-3">${{ totalValue.toFixed(2) }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const { createApp } = Vue;
+
+createApp({
+    data() {
+        return {
+            selectedFile: null,
+            uploading: false,
+            identifying: false,
+            error: null,
+            results: null,
+            manualCardNames: '',
+            identifiedCards: [],
+            totalValue: 0
+        }
+    },
+    methods: {
+        onFileSelected(event) {
+            this.selectedFile = event.target.files[0];
+            this.results = null;
+            this.identifiedCards = [];
+            this.manualCardNames = '';
+        },
+        async uploadImage() {
+            if (!this.selectedFile) return;
+
+            this.uploading = true;
+            this.error = null;
+            this.results = null;
+            this.identifiedCards = [];
+
+            try {
+                const formData = new FormData();
+                formData.append('image', this.selectedFile);
+
+                const response = await fetch('/api/scan', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || 'Failed to scan image');
+                }
+
+                this.results = await response.json();
+                
+                // If cards were automatically identified
+                if (this.results.cards && this.results.cards.length > 0) {
+                    this.identifiedCards = this.results.cards.filter(c => c.name);
+                    this.calculateTotal();
+                }
+            } catch (err) {
+                this.error = err.message;
+            } finally {
+                this.uploading = false;
+            }
+        },
+        async identifyCards() {
+            if (!this.manualCardNames.trim()) return;
+
+            this.identifying = true;
+            this.error = null;
+
+            try {
+                const cardNames = this.manualCardNames.split('\n')
+                    .map(name => name.trim())
+                    .filter(name => name.length > 0);
+
+                const response = await fetch('/api/identify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ card_names: cardNames })
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || 'Failed to identify cards');
+                }
+
+                const data = await response.json();
+                this.identifiedCards = data.cards;
+                this.totalValue = data.total_value;
+            } catch (err) {
+                this.error = err.message;
+            } finally {
+                this.identifying = false;
+            }
+        },
+        calculateTotal() {
+            this.totalValue = this.identifiedCards.reduce((sum, card) => {
+                return sum + (card.price || 0);
+            }, 0);
+        },
+        async addToCollection(card) {
+            try {
+                const response = await fetch('/api/collection/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: card.name,
+                        set: card.set,
+                        price: card.price || 0,
+                        image_uri: card.image_uri || ''
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to add card to collection');
+                }
+
+                alert('Card added to collection!');
+            } catch (err) {
+                this.error = err.message;
+            }
+        }
+    }
+}).mount('#scannerApp');
+</script>
