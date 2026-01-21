@@ -25,11 +25,28 @@ class MTGEstimatorApp < Sinatra::Base
     set :session_secret, ENV.fetch('SECRET_KEY', SecureRandom.hex(64))
     set :port, 5000
     set :bind, '0.0.0.0'
-    set :public_folder, 'public'
+    set :public_folder, 'frontend/dist'
     set :views, 'views'
     
     # Create uploads directory
     FileUtils.mkdir_p('uploads')
+  end
+
+  # CORS configuration for development
+  before do
+    if settings.development?
+      headers['Access-Control-Allow-Origin'] = 'http://localhost:5173'
+      headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+      headers['Access-Control-Allow-Headers'] = 'Content-Type, Accept'
+      headers['Access-Control-Allow-Credentials'] = 'true'
+    end
+  end
+
+  # Handle CORS preflight requests
+  options '*' do
+    response.headers['Allow'] = 'GET, POST, PUT, DELETE, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Accept'
+    200
   end
 
   # Initialize services
@@ -49,24 +66,27 @@ class MTGEstimatorApp < Sinatra::Base
     @ocr_service ||= OCRService.new
   end
 
-  # Home page / Dashboard
-  get '/' do
+  # API endpoint - Get stats for dashboard
+  get '/api/stats' do
+    content_type :json
+    
     collection = session[:collection] || []
     total_cards = collection.length
     total_value = collection.sum { |card| card['price'] || 0 }
 
-    @stats = {
+    json({
       'total_cards' => total_cards,
       'total_value' => total_value,
       'ocr_available' => ocr_service.available?
-    }
-
-    erb :index
+    })
   end
 
-  # Card search page
-  get '/search' do
-    erb :search
+  # API endpoint - Get collection list
+  get '/api/collection/list' do
+    content_type :json
+    
+    collection = session[:collection] || []
+    json(collection)
   end
 
   # API endpoint for card search
@@ -105,12 +125,6 @@ class MTGEstimatorApp < Sinatra::Base
     }
 
     json result
-  end
-
-  # Card scanner page
-  get '/scanner' do
-    @ocr_available = ocr_service.available?
-    erb :scanner
   end
 
   # API endpoint for card scanning and identification
@@ -237,14 +251,6 @@ class MTGEstimatorApp < Sinatra::Base
     })
   end
 
-  # Collection view page
-  get '/collection' do
-    @collection = session[:collection] || []
-    @total_value = @collection.sum { |card| card['price'] || 0 }
-
-    erb :collection
-  end
-
   # Add a card to the collection
   post '/api/collection/add' do
     content_type :json
@@ -309,6 +315,26 @@ class MTGEstimatorApp < Sinatra::Base
   # Error handlers
   error 413 do
     json({ error: 'File is too large. Maximum size is 16MB' })
+  end
+
+  # SPA fallback - serve index.html for all non-API routes
+  get '*' do
+    # Check if the file exists in public folder first
+    file_path = File.join(settings.public_folder, request.path_info)
+    
+    if File.exist?(file_path) && !File.directory?(file_path)
+      send_file file_path
+    else
+      # Serve the SPA index.html
+      index_path = File.join(settings.public_folder, 'index.html')
+      
+      if File.exist?(index_path)
+        send_file index_path
+      else
+        # Fallback for development when frontend isn't built yet
+        halt 404, json({ error: 'Frontend not built. Run: cd frontend && npm run build' })
+      end
+    end
   end
 
   # Run the app if this file is executed directly
