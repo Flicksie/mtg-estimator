@@ -12,8 +12,6 @@ from card_detector import CardDetector
 from card_recognizer import CardRecognizer
 from price_fetcher import PriceFetcher
 from ocr_service import OCRService
-import cv2
-import base64
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -293,5 +291,9 @@ def too_large(e):
 
 
 if __name__ == '__main__':
-    # Run the app in debug mode for development
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Run the app
+    # Note: For production, use a production WSGI server like gunicorn or waitress
+    # Example: gunicorn -w 4 -b 0.0.0.0:5000 app:app
+    import os
+    debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+    app.run(debug=debug_mode, host='0.0.0.0', port=5000)

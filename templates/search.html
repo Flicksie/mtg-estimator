@@ -122,7 +122,7 @@ function displayCardResults(card) {
     document.getElementById('cardImage').src = card.image_uri || 'https://via.placeholder.com/250x350?text=No+Image';
     
     // Set card details
-    document.querySelector('#searchResults #cardName').textContent = card.name;
+    document.querySelector('#searchResults h3').textContent = card.name;
     document.getElementById('cardSet').textContent = `${card.set} (${card.set_code})`;
     document.getElementById('cardType').textContent = card.type_line || 'N/A';
     document.getElementById('cardMana').innerHTML = card.mana_cost ? `<strong>Mana Cost:</strong> ${card.mana_cost}` : '';
