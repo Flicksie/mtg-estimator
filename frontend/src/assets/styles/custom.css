@@ -1,0 +1,95 @@
+/* Custom styles for MTG Card Estimator */
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+#app {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.main-content {
+    flex: 1;
+}
+
+/* Card image styling */
+.card-image img {
+    object-fit: cover;
+}
+
+/* Ensure proper spacing */
+.mt-3 {
+    margin-top: 1rem !important;
+}
+
+.mt-4 {
+    margin-top: 1.5rem !important;
+}
+
+.mt-5 {
+    margin-top: 3rem !important;
+}
+
+/* Loading states */
+.is-loading {
+    pointer-events: none;
+}
+
+/* Notification spacing */
+.notification:not(:last-child) {
+    margin-bottom: 1rem;
+}
+
+/* File upload styling */
+.file.is-boxed .file-label {
+    display: flex;
+    width: 100%;
+}
+
+.file.is-fullwidth .file-name {
+    flex-grow: 1;
+    max-width: none;
+}
+
+/* Card grid responsiveness */
+@media screen and (max-width: 768px) {
+    .column.is-one-quarter,
+    .column.is-one-third {
+        flex: none;
+        width: 100%;
+    }
+}
+
+/* Hero section customization */
+.hero.is-info {
+    background: linear-gradient(135deg, #3273dc 0%, #209cee 100%);
+}
+
+/* Card hover effects */
+.card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* Price display */
+.has-text-success {
+    color: #23d160 !important;
+}
+
+/* Table styling */
+.table {
+    background-color: white;
+}
+
+/* Footer positioning */
+.footer {
+    margin-top: auto;
+}
