@@ -31,11 +31,6 @@ recognizer = CardRecognizer()
 price_fetcher = PriceFetcher()
 ocr_service = OCRService()
 
-# Initialize collection storage (in-memory for now)
-# In production, this should use a database
-if 'collection' not in session:
-    session['collection'] = []
-
 
 def allowed_file(filename):
     """Check if file extension is allowed."""
