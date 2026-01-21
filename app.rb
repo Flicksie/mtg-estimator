@@ -1,10 +1,9 @@
 # frozen_string_literal: true
 
-require 'sinatra/base'
-require 'sinatra/json'
 require 'json'
 require 'fileutils'
 require 'securerandom'
+require 'rack'
 
 begin
   require_relative 'card_detector'
@@ -17,102 +16,133 @@ rescue LoadError => e
   exit 1
 end
 
-# MTG Card Estimator - Web Application
-# Sinatra web interface for card detection, identification, and pricing
-class MTGEstimatorApp < Sinatra::Base
-  configure do
-    enable :sessions
-    set :session_secret, ENV.fetch('SECRET_KEY', SecureRandom.hex(64))
-    set :port, 5000
-    set :bind, '0.0.0.0'
-    set :public_folder, 'frontend/dist'
-    set :views, 'views'
-    
-    # Create uploads directory
-    FileUtils.mkdir_p('uploads')
+# Create uploads directory
+FileUtils.mkdir_p('uploads')
+
+# MTG Card Estimator - Pure Rack Web Application
+class MTGEstimatorApp
+  PUBLIC_FOLDER = 'frontend/dist'
+
+  def initialize
+    @sessions = {}
+    @card_detector = CardDetector.new
+    @card_recognizer = CardRecognizer.new
+    @price_fetcher = PriceFetcher.new
+    @ocr_service = OCRService.new
   end
 
-  # CORS configuration for development
-  before do
-    if settings.development?
-      headers['Access-Control-Allow-Origin'] = 'http://localhost:5173'
-      headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
-      headers['Access-Control-Allow-Headers'] = 'Content-Type, Accept'
-      headers['Access-Control-Allow-Credentials'] = 'true'
+  def call(env)
+    request = Rack::Request.new(env)
+    
+    # Get or create session
+    session_id = request.cookies['session_id'] || SecureRandom.hex(32)
+    @sessions[session_id] ||= { collection: [] }
+    session = @sessions[session_id]
+
+    # CORS headers
+    cors_headers = {
+      'Access-Control-Allow-Origin' => '*',
+      'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers' => 'Content-Type, Accept',
+      'Access-Control-Allow-Credentials' => 'true'
+    }
+
+    # Handle OPTIONS preflight
+    if request.request_method == 'OPTIONS'
+      return [200, cors_headers.merge('Allow' => 'GET, POST, PUT, DELETE, OPTIONS'), ['']]
+    end
+
+    # Route the request
+    status, headers, body = route(request, session)
+
+    # Set session cookie
+    response = Rack::Response.new(body, status, cors_headers.merge(headers))
+    response.set_cookie('session_id', { value: session_id, path: '/' })
+    response.finish
+  end
+
+  private
+
+  def route(request, session)
+    path = request.path_info
+    method = request.request_method
+
+    case [method, path]
+    when ['GET', '/api/stats']
+      api_stats(session)
+    when ['GET', '/api/collection/list']
+      api_collection_list(session)
+    when ['GET', '/api/collection/export']
+      api_collection_export(session)
+    when ['POST', '/api/search']
+      api_search(request)
+    when ['POST', '/api/scan']
+      api_scan(request)
+    when ['POST', '/api/identify']
+      api_identify(request)
+    when ['POST', '/api/collection/add']
+      api_collection_add(request, session)
+    when ['POST', '/api/collection/clear']
+      api_collection_clear(session)
+    else
+      if method == 'DELETE' && path.start_with?('/api/collection/remove/')
+        card_id = path.split('/').last.to_i
+        api_collection_remove(card_id, session)
+      elsif path.start_with?('/api/')
+        json_response(404, { error: 'Not found' })
+      else
+        serve_static(path)
+      end
     end
   end
 
-  # Handle CORS preflight requests
-  options '*' do
-    response.headers['Allow'] = 'GET, POST, PUT, DELETE, OPTIONS'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Accept'
-    200
+  def json_response(status, data)
+    [status, { 'Content-Type' => 'application/json' }, [JSON.generate(data)]]
   end
 
-  # Initialize services
-  def card_detector
-    @card_detector ||= CardDetector.new
-  end
-
-  def card_recognizer
-    @card_recognizer ||= CardRecognizer.new
-  end
-
-  def price_fetcher
-    @price_fetcher ||= PriceFetcher.new
-  end
-
-  def ocr_service
-    @ocr_service ||= OCRService.new
-  end
-
-  # API endpoint - Get stats for dashboard
-  get '/api/stats' do
-    content_type :json
-    
+  def api_stats(session)
     collection = session[:collection] || []
     total_cards = collection.length
     total_value = collection.sum { |card| card['price'] || 0 }
 
-    json({
+    json_response(200, {
       'total_cards' => total_cards,
       'total_value' => total_value,
-      'ocr_available' => ocr_service.available?
+      'ocr_available' => @ocr_service.available?
     })
   end
 
-  # API endpoint - Get collection list
-  get '/api/collection/list' do
-    content_type :json
-    
-    collection = session[:collection] || []
-    json(collection)
+  def api_collection_list(session)
+    json_response(200, session[:collection] || [])
   end
 
-  # API endpoint for card search
-  post '/api/search' do
-    content_type :json
-    
+  def api_collection_export(session)
+    collection = session[:collection] || []
+    json_response(200, {
+      'exported_date' => Time.now.iso8601,
+      'total_cards' => collection.length,
+      'total_value' => collection.sum { |card| card['price'] || 0 },
+      'cards' => collection
+    })
+  end
+
+  def api_search(request)
     data = JSON.parse(request.body.read)
     query = data['query']&.strip
 
     if query.nil? || query.empty?
-      status 400
-      return json({ error: 'Please provide a card name to search' })
+      return json_response(400, { error: 'Please provide a card name to search' })
     end
 
-    # Search for the card
-    card_data = card_recognizer.search_card_by_name(query)
+    card_data = @card_recognizer.search_card_by_name(query)
 
     unless card_data
-      status 404
-      return json({ error: 'Card not found' })
+      return json_response(404, { error: 'Card not found' })
     end
 
-    # Get price information
-    prices = price_fetcher.get_card_price(card_data)
+    prices = @price_fetcher.get_card_price(card_data)
 
-    result = {
+    json_response(200, {
       'name' => card_data['name'],
       'set' => card_data['set_name'],
       'set_code' => card_data['set'],
@@ -122,32 +152,26 @@ class MTGEstimatorApp < Sinatra::Base
       'prices' => prices || {},
       'image_uri' => card_data.dig('image_uris', 'normal') || '',
       'scryfall_uri' => card_data['scryfall_uri'] || ''
-    }
-
-    json result
+    })
   end
 
-  # API endpoint for card scanning and identification
-  post '/api/scan' do
-    content_type :json
-
-    unless params[:image]
-      status 400
-      return json({ error: 'No image file provided' })
+  def api_scan(request)
+    params = Rack::Multipart.parse_multipart(request.env)
+    
+    unless params && params['image']
+      return json_response(400, { error: 'No image file provided' })
     end
 
     begin
-      file = params[:image]
+      file = params['image']
       filename = "#{Time.now.strftime('%Y%m%d_%H%M%S')}_#{file[:filename]}"
       filepath = File.join('uploads', filename)
 
-      # Save the uploaded file
       File.open(filepath, 'wb') do |f|
         f.write(file[:tempfile].read)
       end
 
-      # Detect cards in the image
-      card_images = card_detector.detect_cards(filepath)
+      card_images = @card_detector.detect_cards(filepath)
       num_detected = card_images.length
 
       results = {
@@ -156,11 +180,9 @@ class MTGEstimatorApp < Sinatra::Base
         'filename' => filename
       }
 
-      # Try to identify cards using OCR
-      if ocr_service.available? && num_detected > 0
+      if @ocr_service.available? && num_detected > 0
         card_images.each_with_index do |_card_image, i|
-          # Try OCR on card
-          card_name = ocr_service.extract_card_name_from_region(filepath)
+          card_name = @ocr_service.extract_card_name_from_region(filepath)
 
           card_info = {
             'index' => i,
@@ -172,11 +194,10 @@ class MTGEstimatorApp < Sinatra::Base
           }
 
           if card_name
-            # Search for the card
-            card_data = card_recognizer.search_card_by_name(card_name)
+            card_data = @card_recognizer.search_card_by_name(card_name)
 
             if card_data
-              prices = price_fetcher.get_card_price(card_data)
+              prices = @price_fetcher.get_card_price(card_data)
               price_usd = prices ? prices['usd'] || 0 : 0
 
               card_info.merge!({
@@ -195,33 +216,28 @@ class MTGEstimatorApp < Sinatra::Base
         results['message'] = 'Cards detected but OCR not available. Please provide card names manually.'
       end
 
-      json results
+      json_response(200, results)
     rescue StandardError => e
-      status 500
-      json({ error: "Error processing image: #{e.message}" })
+      json_response(500, { error: "Error processing image: #{e.message}" })
     end
   end
 
-  # API endpoint for manual card identification
-  post '/api/identify' do
-    content_type :json
-
+  def api_identify(request)
     data = JSON.parse(request.body.read)
     card_names = data['card_names'] || []
 
     if card_names.empty?
-      status 400
-      return json({ error: 'No card names provided' })
+      return json_response(400, { error: 'No card names provided' })
     end
 
     results = []
     total_value = 0
 
     card_names.each do |card_name|
-      card_data = card_recognizer.search_card_by_name(card_name)
+      card_data = @card_recognizer.search_card_by_name(card_name)
 
       if card_data
-        prices = price_fetcher.get_card_price(card_data)
+        prices = @price_fetcher.get_card_price(card_data)
         price_usd = prices ? prices['usd'] || 0 : 0
 
         card_info = {
@@ -245,16 +261,13 @@ class MTGEstimatorApp < Sinatra::Base
       results << card_info
     end
 
-    json({
+    json_response(200, {
       'cards' => results,
       'total_value' => total_value.round(2)
     })
   end
 
-  # Add a card to the collection
-  post '/api/collection/add' do
-    content_type :json
-
+  def api_collection_add(request, session)
     data = JSON.parse(request.body.read)
     session[:collection] ||= []
 
@@ -269,74 +282,45 @@ class MTGEstimatorApp < Sinatra::Base
 
     session[:collection] << card
 
-    json({ success: true, card: card })
+    json_response(200, { success: true, card: card })
   end
 
-  # Remove a card from the collection
-  delete '/api/collection/remove/:card_id' do
-    content_type :json
-
-    card_id = params[:card_id].to_i
+  def api_collection_remove(card_id, session)
     unless session[:collection]
-      status 404
-      return json({ error: 'Collection not found' })
+      return json_response(404, { error: 'Collection not found' })
     end
 
     session[:collection].reject! { |c| c['id'] == card_id }
 
-    json({ success: true })
+    json_response(200, { success: true })
   end
 
-  # Export collection as JSON
-  get '/api/collection/export' do
-    content_type :json
-
-    collection = session[:collection] || []
-
-    export_data = {
-      'exported_date' => Time.now.iso8601,
-      'total_cards' => collection.length,
-      'total_value' => collection.sum { |card| card['price'] || 0 },
-      'cards' => collection
-    }
-
-    json export_data
-  end
-
-  # Clear the entire collection
-  post '/api/collection/clear' do
-    content_type :json
-
+  def api_collection_clear(session)
     session[:collection] = []
-
-    json({ success: true })
+    json_response(200, { success: true })
   end
 
-  # Error handlers
-  error 413 do
-    json({ error: 'File is too large. Maximum size is 16MB' })
-  end
-
-  # SPA fallback - serve index.html for all non-API routes
-  get '*' do
-    # Check if the file exists in public folder first
-    file_path = File.join(settings.public_folder, request.path_info)
+  def serve_static(path)
+    file_path = File.join(PUBLIC_FOLDER, path)
     
     if File.exist?(file_path) && !File.directory?(file_path)
-      send_file file_path
+      mime_type = Rack::Mime.mime_type(File.extname(file_path))
+      [200, { 'Content-Type' => mime_type }, [File.read(file_path)]]
     else
-      # Serve the SPA index.html
-      index_path = File.join(settings.public_folder, 'index.html')
+      index_path = File.join(PUBLIC_FOLDER, 'index.html')
       
       if File.exist?(index_path)
-        send_file index_path
+        [200, { 'Content-Type' => 'text/html' }, [File.read(index_path)]]
       else
-        # Fallback for development when frontend isn't built yet
-        halt 404, json({ error: 'Frontend not built. Run: cd frontend && npm run build' })
+        json_response(404, { error: 'Frontend not built. Run: cd frontend && npm run build' })
       end
     end
   end
+end
 
-  # Run the app if this file is executed directly
-  run! if app_file == $PROGRAM_NAME
+# Run with: ruby app.rb
+if __FILE__ == $PROGRAM_NAME
+  require 'rack/handler/puma'
+  puts "Starting MTG Estimator on http://0.0.0.0:5000"
+  Rack::Handler::Puma.run(MTGEstimatorApp.new, Host: '0.0.0.0', Port: 5000)
 end
