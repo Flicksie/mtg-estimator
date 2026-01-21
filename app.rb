@@ -5,10 +5,17 @@ require 'sinatra/json'
 require 'json'
 require 'fileutils'
 require 'securerandom'
-require_relative 'card_detector'
-require_relative 'card_recognizer'
-require_relative 'price_fetcher'
-require_relative 'ocr_service'
+
+begin
+  require_relative 'card_detector'
+  require_relative 'card_recognizer'
+  require_relative 'price_fetcher'
+  require_relative 'ocr_service'
+rescue LoadError => e
+  puts "Error loading required files: #{e.message}"
+  puts "Please ensure all service files are present in the application directory."
+  exit 1
+end
 
 # MTG Card Estimator - Web Application
 # Sinatra web interface for card detection, identification, and pricing

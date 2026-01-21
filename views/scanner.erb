@@ -3,14 +3,17 @@
     <p class="subtitle">Upload images of your cards for automatic identification</p>
 
     <div class="notification <%= @ocr_available ? 'is-info' : 'is-warning' %>">
-        <p v-if="<%= @ocr_available %>">
+        <% if @ocr_available %>
+        <p>
             <span class="icon"><i class="fas fa-info-circle"></i></span>
             OCR is available! Upload card images and we'll try to identify them automatically.
         </p>
-        <p v-else>
+        <% else %>
+        <p>
             <span class="icon"><i class="fas fa-exclamation-triangle"></i></span>
             OCR is not available. You can still upload images and provide card names manually.
         </p>
+        <% end %>
     </div>
 
     <div class="box">
