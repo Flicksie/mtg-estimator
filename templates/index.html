@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Home - MTG Card Estimator{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="jumbotron bg-light p-5 rounded">
+            <h1 class="display-4">Welcome to MTG Card Estimator</h1>
+            <p class="lead">Detect, identify, and estimate the value of your Magic: The Gathering cards.</p>
+            <hr class="my-4">
+            <p>Use our powerful tools to scan card images, search for specific cards, and manage your collection.</p>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <!-- Statistics Cards -->
+    <div class="col-md-4 mb-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-collection-fill"></i> Your Collection</h5>
+                <h2 class="display-6">{{ stats.total_cards }}</h2>
+                <p class="card-text">Total Cards</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-currency-dollar"></i> Total Value</h5>
+                <h2 class="display-6">${{ "%.2f"|format(stats.total_value) }}</h2>
+                <p class="card-text">Estimated USD</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card text-white {% if stats.ocr_available %}bg-success{% else %}bg-warning{% endif %}">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-eye-fill"></i> OCR Status</h5>
+                <h2 class="display-6">
+                    {% if stats.ocr_available %}
+                        <i class="bi bi-check-circle-fill"></i>
+                    {% else %}
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                    {% endif %}
+                </h2>
+                <p class="card-text">
+                    {% if stats.ocr_available %}
+                        Available
+                    {% else %}
+                        Limited
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <!-- Feature Cards -->
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-search display-1 text-primary"></i>
+                <h5 class="card-title mt-3">Card Search</h5>
+                <p class="card-text">Search for any Magic: The Gathering card and get detailed information including current market prices.</p>
+                <a href="{{ url_for('search') }}" class="btn btn-primary">Go to Search</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-camera-fill display-1 text-success"></i>
+                <h5 class="card-title mt-3">Card Scanner</h5>
+                <p class="card-text">Upload or capture images of your cards. Our OCR technology will identify them automatically.</p>
+                <a href="{{ url_for('scanner') }}" class="btn btn-success">Go to Scanner</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-collection-fill display-1 text-info"></i>
+                <h5 class="card-title mt-3">My Collection</h5>
+                <p class="card-text">View and manage your card collection. Track values and export your collection data.</p>
+                <a href="{{ url_for('collection') }}" class="btn btn-info">View Collection</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-12">
+        <h3>How It Works</h3>
+        <div class="accordion" id="howItWorksAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
+                        1. Upload or Search
+                    </button>
+                </h2>
+                <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#howItWorksAccordion">
+                    <div class="accordion-body">
+                        Use the <strong>Scanner</strong> to upload images of your cards, or use the <strong>Search</strong> feature to look up cards by name.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">
+                        2. Automatic Identification
+                    </button>
+                </h2>
+                <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#howItWorksAccordion">
+                    <div class="accordion-body">
+                        Our OCR technology analyzes card images to extract card names. You can also provide card names manually for best results.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree">
+                        3. Get Pricing
+                    </button>
+                </h2>
+                <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#howItWorksAccordion">
+                    <div class="accordion-body">
+                        We fetch current market prices from Scryfall's comprehensive database, giving you accurate price estimates for your cards.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour">
+                        4. Manage Collection
+                    </button>
+                </h2>
+                <div id="collapseFour" class="accordion-collapse collapse" data-bs-parent="#howItWorksAccordion">
+                    <div class="accordion-body">
+                        Add cards to your collection, track total value, and export your collection data for safekeeping or sharing.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if not stats.ocr_available %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="alert alert-warning">
+            <h5><i class="bi bi-exclamation-triangle-fill"></i> OCR Not Fully Available</h5>
+            <p>Tesseract OCR is not installed or not accessible. Automatic card name recognition from images will be limited. You can still:</p>
+            <ul>
+                <li>Search for cards manually by name</li>
+                <li>Upload images and provide card names manually</li>
+                <li>Use all other features of the application</li>
+            </ul>
+            <p class="mb-0"><strong>To enable OCR:</strong> Install Tesseract OCR on your system and the pytesseract Python package.</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

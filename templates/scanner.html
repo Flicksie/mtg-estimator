@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+
+{% block title %}Card Scanner - MTG Card Estimator{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 offset-md-1">
+        <h2 class="mb-4"><i class="bi bi-camera-fill"></i> Card Scanner</h2>
+        
+        {% if not ocr_available %}
+        <div class="alert alert-warning">
+            <strong>Note:</strong> OCR is not fully available. You can still upload images and provide card names manually.
+        </div>
+        {% endif %}
+        
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Upload Card Image</h5>
+                <p class="card-text">Upload a photo of your MTG cards. Our system will detect and identify them.</p>
+                
+                <form id="uploadForm">
+                    <div class="mb-3">
+                        <label for="cardImage" class="form-label">Select Image</label>
+                        <input class="form-control form-control-lg" type="file" id="cardImage" 
+                               accept="image/png,image/jpeg,image/jpg,image/gif" required>
+                        <div class="form-text">Supported formats: PNG, JPG, JPEG, GIF (Max 16MB)</div>
+                    </div>
+                    
+                    <div id="imagePreview" class="mb-3" style="display: none;">
+                        <img id="previewImage" class="img-fluid rounded" style="max-height: 400px;">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success btn-lg w-100" id="uploadBtn">
+                        <i class="bi bi-upload"></i> Upload and Scan
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="loadingSpinner" class="text-center" style="display: none;">
+            <div class="spinner-border text-success" role="status">
+                <span class="visually-hidden">Processing...</span>
+            </div>
+            <p class="mt-2">Processing image and detecting cards...</p>
+        </div>
+
+        <!-- Error Alert -->
+        <div id="errorAlert" class="alert alert-danger" style="display: none;" role="alert"></div>
+
+        <!-- Detection Results -->
+        <div id="detectionResults" style="display: none;">
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-check-circle"></i> Detection Complete</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Cards Detected:</strong> <span id="numDetected">0</span></p>
+                    <p id="detectionMessage" class="text-muted"></p>
+                </div>
+            </div>
+
+            <!-- Manual Input Section -->
+            <div id="manualInputSection" class="card mb-4" style="display: none;">
+                <div class="card-body">
+                    <h5 class="card-title">Provide Card Names</h5>
+                    <p class="card-text">Enter the names of the detected cards (one per line):</p>
+                    <textarea class="form-control mb-3" id="cardNames" rows="5" 
+                              placeholder="Lightning Bolt&#10;Counterspell&#10;Black Lotus"></textarea>
+                    <button class="btn btn-primary" id="identifyBtn">
+                        <i class="bi bi-search"></i> Identify Cards
+                    </button>
+                </div>
+            </div>
+
+            <!-- Identified Cards -->
+            <div id="identifiedCards"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let detectedCards = [];
+
+// Preview image before upload
+document.getElementById('cardImage').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('previewImage').src = e.target.result;
+            document.getElementById('imagePreview').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+// Handle form submission
+document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const fileInput = document.getElementById('cardImage');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        alert('Please select an image file');
+        return;
+    }
+    
+    const uploadBtn = document.getElementById('uploadBtn');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const errorAlert = document.getElementById('errorAlert');
+    const detectionResults = document.getElementById('detectionResults');
+    
+    // Reset UI
+    uploadBtn.disabled = true;
+    loadingSpinner.style.display = 'block';
+    errorAlert.style.display = 'none';
+    detectionResults.style.display = 'none';
+    
+    try {
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        const response = await fetch('/api/scan', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to scan image');
+        }
+        
+        detectedCards = data.cards || [];
+        displayDetectionResults(data);
+        
+    } catch (error) {
+        errorAlert.textContent = error.message;
+        errorAlert.style.display = 'block';
+    } finally {
+        uploadBtn.disabled = false;
+        loadingSpinner.style.display = 'none';
+    }
+});
+
+function displayDetectionResults(data) {
+    const detectionResults = document.getElementById('detectionResults');
+    const numDetected = document.getElementById('numDetected');
+    const detectionMessage = document.getElementById('detectionMessage');
+    const manualInputSection = document.getElementById('manualInputSection');
+    const identifiedCards = document.getElementById('identifiedCards');
+    
+    numDetected.textContent = data.num_detected;
+    
+    if (data.message) {
+        detectionMessage.textContent = data.message;
+        manualInputSection.style.display = 'block';
+        identifiedCards.innerHTML = '';
+    } else if (data.cards && data.cards.length > 0) {
+        detectionMessage.textContent = 'Cards identified automatically using OCR:';
+        manualInputSection.style.display = 'none';
+        displayIdentifiedCards(data.cards);
+    } else {
+        detectionMessage.textContent = 'No cards detected in the image. Please try a different image.';
+        manualInputSection.style.display = 'none';
+        identifiedCards.innerHTML = '';
+    }
+    
+    detectionResults.style.display = 'block';
+}
+
+// Handle manual card identification
+document.getElementById('identifyBtn').addEventListener('click', async function() {
+    const cardNamesText = document.getElementById('cardNames').value.trim();
+    
+    if (!cardNamesText) {
+        alert('Please enter at least one card name');
+        return;
+    }
+    
+    const cardNames = cardNamesText.split('\n').map(name => name.trim()).filter(name => name);
+    
+    try {
+        const response = await fetch('/api/identify', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ card_names: cardNames })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to identify cards');
+        }
+        
+        displayIdentifiedCards(data.cards);
+        
+    } catch (error) {
+        alert('Error identifying cards: ' + error.message);
+    }
+});
+
+function displayIdentifiedCards(cards) {
+    const identifiedCards = document.getElementById('identifiedCards');
+    
+    if (!cards || cards.length === 0) {
+        identifiedCards.innerHTML = '<p class="text-muted">No cards to display.</p>';
+        return;
+    }
+    
+    let html = '<h5 class="mb-3">Identified Cards</h5><div class="row">';
+    
+    cards.forEach((card, index) => {
+        if (card.found !== false && card.name) {
+            html += `
+                <div class="col-md-6 mb-3">
+                    <div class="card">
+                        <div class="row g-0">
+                            <div class="col-4">
+                                <img src="${card.image_uri || 'https://via.placeholder.com/150x210?text=No+Image'}" 
+                                     class="img-fluid rounded-start" alt="${card.name}">
+                            </div>
+                            <div class="col-8">
+                                <div class="card-body">
+                                    <h6 class="card-title">${card.name}</h6>
+                                    <p class="card-text small">
+                                        <strong>Set:</strong> ${card.set || 'N/A'}<br>
+                                        <strong>Price:</strong> $${(card.price || 0).toFixed(2)}
+                                    </p>
+                                    <button class="btn btn-sm btn-success" onclick="addToCollection(${index})">
+                                        <i class="bi bi-plus-circle"></i> Add
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            html += `
+                <div class="col-md-6 mb-3">
+                    <div class="card border-warning">
+                        <div class="card-body">
+                            <h6 class="card-title text-warning">${card.name}</h6>
+                            <p class="card-text small text-muted">
+                                ${card.error || 'Card not found'}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    });
+    
+    html += '</div>';
+    identifiedCards.innerHTML = html;
+    
+    // Store cards globally for add to collection function
+    window.identifiedCardsData = cards;
+}
+
+async function addToCollection(index) {
+    const cards = window.identifiedCardsData;
+    if (!cards || !cards[index]) {
+        alert('Card data not available');
+        return;
+    }
+    
+    const card = cards[index];
+    
+    try {
+        const response = await fetch('/api/collection/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name: card.name,
+                set: card.set,
+                price: card.price || 0,
+                image_uri: card.image_uri
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to add card to collection');
+        }
+        
+        alert('Card added to collection!');
+    } catch (error) {
+        alert('Error adding card to collection: ' + error.message);
+    }
+}
+</script>
+{% endblock %}
