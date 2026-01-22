@@ -3,9 +3,9 @@
 
 require 'optparse'
 require 'dotenv/load'
-require_relative 'services/card_recognizer'
-require_relative 'services/price_fetcher'
-require_relative 'services/ocr_service'
+require_relative 'app/services/card_recognizer'
+require_relative 'app/services/price_fetcher'
+require_relative 'app/services/ocr_service'
 
 # MTGEstimator - Main application class for MTG card estimation
 class MTGEstimator

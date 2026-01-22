@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require_relative "../../action"
-require_relative "../../../services/card_recognizer"
-require_relative "../../../services/price_fetcher"
+require_relative "../../services/card_recognizer"
+require_relative "../../services/price_fetcher"
 
 module MTGEstimator
   module Actions

@@ -10,9 +10,9 @@ CODESPACE_NAME = ENV['GITHUB_CODESPACE_NAME']
 ENVIRONMENT = ENV['RACK_ENV'] || 'development'
 
 # Load services
-require_relative "services/card_recognizer"
-require_relative "services/price_fetcher"
-require_relative "services/ocr_service"
+require_relative "app/services/card_recognizer"
+require_relative "app/services/price_fetcher"
+require_relative "app/services/ocr_service"
 
 # Load the base action
 require_relative "app/action"
