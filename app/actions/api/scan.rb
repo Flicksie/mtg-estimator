@@ -4,6 +4,7 @@ require_relative "../../action"
 require_relative "../../../services/card_recognizer"
 require_relative "../../../services/price_fetcher"
 require_relative "../../../services/ocr_service"
+require "digest"
 
 module MTGEstimator
   module Actions
@@ -24,17 +25,31 @@ module MTGEstimator
           end
 
           begin
-            filename = "#{Time.now.strftime('%Y%m%d_%H%M%S')}_#{file_data[:filename]}"
-            filepath = File.join("uploads", filename)
-
-            File.open(filepath, "wb") do |f|
-              f.write(file_data[:tempfile].read)
+            # Read file content and calculate hash
+            file_content = file_data[:tempfile].read
+            file_hash = Digest::SHA256.hexdigest(file_content)
+            
+            # Check if file with this hash already exists
+            existing_file = find_existing_file_by_hash(file_hash)
+            
+            if existing_file
+              filepath = File.join("uploads", existing_file)
+              filename = existing_file
+            else
+              # Save new file with hash prefix
+              filename = "#{file_hash[0..7]}_#{Time.now.strftime('%Y%m%d_%H%M%S')}_#{file_data[:filename]}"
+              filepath = File.join("uploads", filename)
+              
+              File.open(filepath, "wb") do |f|
+                f.write(file_content)
+              end
             end
 
             results = {
               "num_detected" => 0,
               "cards" => [],
-              "filename" => filename
+              "filename" => filename,
+              "duplicate" => !existing_file.nil?
             }
 
             if @ocr_service.available?
@@ -82,6 +97,14 @@ module MTGEstimator
           rescue StandardError => e
             json_response(response, { error: "Error processing image: #{e.message}" }, status: 500)
           end
+        end
+
+        private
+
+        # Find existing file by hash prefix
+        def find_existing_file_by_hash(file_hash)
+          hash_prefix = file_hash[0..7]
+          Dir.glob(File.join("uploads", "#{hash_prefix}_*")).first&.then { |path| File.basename(path) }
         end
       end
     end
