@@ -44,35 +44,40 @@ module MTGEstimator
 
             if @ocr_service.available? && num_detected > 0
               card_images.each_with_index do |_card_image, i|
-                card_name = @ocr_service.extract_card_name_from_region(filepath)
+                raw_names = @ocr_service.extract_card_name_from_region(filepath)
+                card_names = Array(raw_names).map(&:to_s).map(&:strip).reject(&:empty?)
 
-                card_info = {
-                  "index" => i,
-                  "detected" => true,
-                  "name" => nil,
-                  "price" => nil,
-                  "set" => nil,
-                  "image_uri" => nil
-                }
+                # If OCR returns multiple possible names, create an entry for each
+                (card_names.empty? ? [nil] : card_names).each_with_index do |card_name, name_idx|
+                  card_info = {
+                    "index" => i,
+                    "alt_index" => name_idx,
+                    "detected" => true,
+                    "name" => nil,
+                    "price" => nil,
+                    "set" => nil,
+                    "image_uri" => nil
+                  }
 
-                if card_name
-                  card_data = @card_recognizer.search_card_by_name(card_name)
+                  if card_name
+                    card_data = @card_recognizer.search_card_by_name(card_name)
 
-                  if card_data
-                    prices = @price_fetcher.get_card_price(card_data)
-                    price_usd = prices ? prices["usd"] || 0 : 0
+                    if card_data
+                      prices = @price_fetcher.get_card_price(card_data)
+                      price_usd = prices ? prices["usd"] || 0 : 0
 
-                    card_info.merge!({
-                      "name" => card_data["name"],
-                      "price" => price_usd,
-                      "set" => card_data["set_name"],
-                      "set_code" => card_data["set"],
-                      "image_uri" => card_data.dig("image_uris", "normal") || ""
-                    })
+                      card_info.merge!({
+                        "name" => card_data["name"],
+                        "price" => price_usd,
+                        "set" => card_data["set_name"],
+                        "set_code" => card_data["set"],
+                        "image_uri" => card_data.dig("image_uris", "normal") || ""
+                      })
+                    end
                   end
-                end
 
-                results["cards"] << card_info
+                  results["cards"] << card_info
+                end
               end
             else
               results["message"] = "Cards detected but OCR not available. Please provide card names manually."

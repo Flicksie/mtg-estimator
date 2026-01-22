@@ -38,7 +38,10 @@
               <i class="fas" :class="stats.ocr_available ? 'fa-check-circle' : 'fa-exclamation-triangle'" style="font-size: 2rem;"></i>
             </span>
           </p>
-          <p class="subtitle">{{ stats.ocr_available ? 'Available' : 'Limited' }}</p>
+          <p class="subtitle">
+            {{ stats.ocr_available ? 'Available' : 'Limited' }}
+            <button class="button is-small" @click="reloadOCRStatus">Reload Status</button>
+          </p>
         </div>
       </div>
     </div>
@@ -155,8 +158,19 @@ const stats = ref<Stats>({
 const loadStats = async () => {
   try {
     stats.value = await api.getStats()
+    console.log('Stats loaded:', stats.value)
   } catch (error) {
     console.error('Failed to load stats:', error)
+  }
+}
+
+const reloadOCRStatus = async () => {
+  try {
+    const ocrStatus = await api.getStats()
+    stats.value.ocr_available = ocrStatus.ocr_available
+    console.log('OCR status reloaded:', ocrStatus)
+  } catch (error) {
+    console.error('Failed to reload OCR status:', error)
   }
 }
 

@@ -21,7 +21,8 @@ module MTGEstimator
           json_response(response, {
             "total_cards" => collection.length,
             "total_value" => collection.sum { |card| card["price"] || 0 },
-            "ocr_available" => @ocr_service.available?
+            "ocr_available" => @ocr_service.available?,
+            "ocr_backend" => @ocr_service.backend
           })
           
           response.set_cookie("session_id", { value: session_id, path: "/" })

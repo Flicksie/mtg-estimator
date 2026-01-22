@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require 'optparse'
+require 'dotenv/load'
 require_relative 'card_detector'
 require_relative 'card_recognizer'
 require_relative 'price_fetcher'
