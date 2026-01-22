@@ -10,7 +10,6 @@ CODESPACE_NAME = ENV['GITHUB_CODESPACE_NAME']
 ENVIRONMENT = ENV['RACK_ENV'] || 'development'
 
 # Load services
-require_relative "card_detector"
 require_relative "card_recognizer"
 require_relative "price_fetcher"
 require_relative "ocr_service"

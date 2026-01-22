@@ -12,8 +12,6 @@ sudo apt-get update > /dev/null 2>&1
 # Install system dependencies
 echo "📥 Installing system dependencies..."
 sudo apt-get install -y \
-  tesseract-ocr \
-  tesseract-ocr-eng \
   imagemagick \
   libmagick++-dev \
   libmagickcore-dev \

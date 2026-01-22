@@ -132,14 +132,14 @@
     </div>
 
     <div v-if="!stats.ocr_available" class="notification is-warning mt-4">
-      <h5 class="title is-5"><i class="fas fa-exclamation-triangle"></i> OCR Not Fully Available</h5>
-      <p>Tesseract OCR is not installed or not accessible. Automatic card name recognition from images will be limited. You can still:</p>
+      <h5 class="title is-5"><i class="fas fa-exclamation-triangle"></i> OCR Not Available</h5>
+      <p>Gemini Vision API is not configured. Automatic card name recognition from images will be unavailable. You can still:</p>
       <ul>
         <li>Search for cards manually by name</li>
         <li>Upload images and provide card names manually</li>
         <li>Use all other features of the application</li>
       </ul>
-      <p><strong>To enable OCR:</strong> Install Tesseract OCR on your system.</p>
+      <p><strong>To enable OCR:</strong> Set GEMINI_API_KEY in your .env file.</p>
     </div>
   </div>
 </template>

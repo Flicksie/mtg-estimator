@@ -20,11 +20,6 @@ gem "json", "~> 2.7"
 # Environment variables
 gem "dotenv", "~> 3.1"
 
-# Image processing (optional - for card detection)
-group :image_processing do
-  gem "rmagick", "~> 5.0"
-end
-
 group :development do
   gem "rerun", "~> 0.14"
 end
