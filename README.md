@@ -6,7 +6,7 @@ A Ruby application to detect Magic: The Gathering cards in images and estimate t
 
 - **Web Interface**: Modern, responsive Vue.js 3 SPA with Vite
 - **Card Detection**: Detect multiple MTG cards in a single image
-- **OCR Recognition**: Automatic card name extraction using Tesseract OCR
+- **OCR Recognition**: Automatic card name extraction using Gemini Vision AI
 - **Price Estimation**: Fetch current market prices from Scryfall API
 - **Card Search**: Search for any MTG card and view detailed information
 - **Collection Management**: Track your card collection with pricing
@@ -26,7 +26,7 @@ A Ruby application to detect Magic: The Gathering cards in images and estimate t
 
 - Ruby 3.2+
 - Node.js 18+ and npm
-- (Optional) Tesseract OCR for automatic card recognition
+- Gemini API key for automatic card recognition
 
 ### Clone and Setup
 
