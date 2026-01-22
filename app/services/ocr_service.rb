@@ -9,8 +9,8 @@ require 'openssl'
 # OCRService - Service for extracting text from card images using OCR
 # Uses Gemini Vision (preferred) for title extraction; no local OCR dependencies.
 class OCRService
-  def initialize
-    @gemini_key = ENV['GEMINI_API_KEY']
+  def initialize(custom_key = nil)
+    @gemini_key = custom_key || ENV['GEMINI_API_KEY']
     @backend = choose_backend
     puts "[OCR] initialized backend=#{@backend} gemini_key_present=#{!@gemini_key.to_s.empty?}"
   end

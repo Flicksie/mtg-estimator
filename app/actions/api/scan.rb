@@ -19,12 +19,16 @@ module MTGEstimator
 
         def handle(request, response)
           file_data = request.params["image"]
+          custom_gemini_key = request.params["gemini_key"]
           
           unless file_data && file_data[:tempfile]
             return json_response(response, { error: "No image file provided" }, status: 400)
           end
 
           begin
+            # Use custom key if provided, otherwise use server's key
+            @ocr_service = OCRService.new(custom_gemini_key) if custom_gemini_key
+            
             # Read file content and calculate hash
             file_content = file_data[:tempfile].read
             file_hash = Digest::SHA256.hexdigest(file_content)
