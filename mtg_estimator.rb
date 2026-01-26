@@ -2,16 +2,17 @@
 # frozen_string_literal: true
 
 require 'optparse'
-require_relative 'card_detector'
-require_relative 'card_recognizer'
-require_relative 'price_fetcher'
+require 'dotenv/load'
+require_relative 'app/services/card_recognizer'
+require_relative 'app/services/price_fetcher'
+require_relative 'app/services/ocr_service'
 
 # MTGEstimator - Main application class for MTG card estimation
 class MTGEstimator
   def initialize
-    @detector = CardDetector.new
     @recognizer = CardRecognizer.new
     @price_fetcher = PriceFetcher.new
+    @ocr_service = OCRService.new
   end
 
   # Process an image to detect and estimate card values
@@ -28,18 +29,25 @@ class MTGEstimator
 
     begin
       puts "Processing image: #{image_path}"
-      card_images = @detector.detect_cards(image_path)
-      results['cards_detected'] = card_images.length
-      puts "Detected #{card_images.length} card(s) in the image"
 
       if card_names && !card_names.empty?
         puts "\nUsing provided card names: #{card_names.join(', ')}"
         price_results = @price_fetcher.estimate_total_value(card_names)
         results['cards'] = price_results['cards']
         results['total_value'] = price_results['total_usd']
+        results['cards_detected'] = card_names.length
+      elsif @ocr_service.available?
+        puts "\nUsing Gemini Vision OCR for card recognition..."
+        raw_names = @ocr_service.extract_card_name_from_region(image_path)
+        detected_names = Array(raw_names).map(&:to_s).map(&:strip).reject(&:empty?)
+        results['cards_detected'] = detected_names.length
+        puts "Detected #{detected_names.length} card(s): #{detected_names.join(', ')}"
+        
+        price_results = @price_fetcher.estimate_total_value(detected_names)
+        results['cards'] = price_results['cards']
+        results['total_value'] = price_results['total_usd']
       else
-        puts "\nNote: Automatic card recognition from images requires OCR integration."
-        puts "Please provide card names manually using the --cards option."
+        puts "\nNote: OCR not available. Please provide card names manually using the --cards option."
       end
 
       results

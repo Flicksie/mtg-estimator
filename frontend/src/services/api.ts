@@ -44,9 +44,12 @@ class ApiService {
   }
 
   // Scanner
-  async scanImage(file: File): Promise<ScanResult> {
+  async scanImage(file: File, geminiKey?: string): Promise<ScanResult> {
     const formData = new FormData()
     formData.append('image', file)
+    if (geminiKey) {
+      formData.append('gemini_key', geminiKey)
+    }
 
     return this.request<ScanResult>('/api/scan', {
       method: 'POST',

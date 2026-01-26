@@ -14,6 +14,25 @@
       </p>
     </div>
 
+    <div class="box mb-4">
+      <div class="field">
+        <label class="label">
+          <span class="icon-text">
+            <span class="icon"><i class="fas fa-key"></i></span>
+            <span>Gemini API Key (Optional)</span>
+          </span>
+        </label>
+        <div class="control">
+          <input 
+            v-model="customGeminiKey"
+            class="input" 
+            type="password"
+            placeholder="Enter your own Gemini API key (optional)">
+        </div>
+        <p class="help">Leave empty to use server's key. Your key is stored locally and sent with each request.</p>
+      </div>
+    </div>
+
     <div class="box">
       <div class="file has-name is-boxed is-large is-fullwidth">
         <label class="file-label">
@@ -125,7 +144,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import api from '../services/api'
 import type { Card, ScanResult } from '../types'
 
@@ -139,6 +158,25 @@ const identifiedCards = ref<Card[]>([])
 const totalValue = ref(0)
 const ocrAvailable = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
+const customGeminiKey = ref('')
+
+// Load saved key from localStorage
+onMounted(() => {
+  const savedKey = localStorage.getItem('gemini_api_key')
+  if (savedKey) {
+    customGeminiKey.value = savedKey
+  }
+  checkOcrStatus()
+})
+
+// Save key to localStorage when it changes
+watch(customGeminiKey, (newKey) => {
+  if (newKey) {
+    localStorage.setItem('gemini_api_key', newKey)
+  } else {
+    localStorage.removeItem('gemini_api_key')
+  }
+})
 
 const onFileSelected = (event: Event) => {
   const target = event.target as HTMLInputElement
@@ -157,7 +195,7 @@ const uploadImage = async () => {
   identifiedCards.value = []
 
   try {
-    results.value = await api.scanImage(selectedFile.value)
+    results.value = await api.scanImage(selectedFile.value, customGeminiKey.value || undefined)
     
     // If cards were automatically identified
     if (results.value.cards && results.value.cards.length > 0) {
@@ -213,7 +251,7 @@ const addToCollection = async (card: Card) => {
   }
 }
 
-const loadOcrStatus = async () => {
+const checkOcrStatus = async () => {
   try {
     const stats = await api.getStats()
     ocrAvailable.value = stats.ocr_available
@@ -221,8 +259,4 @@ const loadOcrStatus = async () => {
     console.error('Failed to load OCR status:', error)
   }
 }
-
-onMounted(() => {
-  loadOcrStatus()
-})
 </script>

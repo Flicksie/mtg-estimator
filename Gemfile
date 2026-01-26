@@ -4,11 +4,12 @@ source "https://rubygems.org"
 
 ruby "~> 3.2"
 
-# Web framework
-gem "sinatra", "~> 4.0"
-gem "sinatra-contrib", "~> 4.0"
+# Web framework - Rack
+gem "rack", "~> 3.0"
 gem "puma", "~> 6.4"
-gem "rackup", "~> 2.2"
+
+# CORS
+gem "rack-cors", "~> 2.0"
 
 # HTTP client for API calls
 gem "httparty", "~> 0.22"
@@ -18,9 +19,6 @@ gem "json", "~> 2.7"
 
 # Environment variables
 gem "dotenv", "~> 3.1"
-
-# Session management
-gem "rack", "~> 3.0"
 
 group :development do
   gem "rerun", "~> 0.14"
