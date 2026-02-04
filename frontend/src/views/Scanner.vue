@@ -56,6 +56,12 @@
         </label>
       </div>
 
+      <div v-if="imagePreview" class="mt-4">
+        <figure class="image">
+          <img :src="imagePreview" alt="Preview" style="max-height: 400px; width: auto; margin: 0 auto; display: block;">
+        </figure>
+      </div>
+
       <button 
         @click="uploadImage" 
         :class="['button', 'is-primary', 'is-large', 'is-fullwidth', 'mt-3', { 'is-loading': uploading }]"
@@ -159,6 +165,7 @@ const totalValue = ref(0)
 const ocrAvailable = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
 const customGeminiKey = ref('')
+const imagePreview = ref('')
 
 // Load saved key from localStorage
 onMounted(() => {
@@ -180,10 +187,24 @@ watch(customGeminiKey, (newKey) => {
 
 const onFileSelected = (event: Event) => {
   const target = event.target as HTMLInputElement
-  selectedFile.value = target.files?.[0] || null
+  const file = target.files?.[0] || null
+  
+  // Clean up previous preview URL
+  if (imagePreview.value) {
+    URL.revokeObjectURL(imagePreview.value)
+  }
+  
+  selectedFile.value = file
   results.value = null
   identifiedCards.value = []
   manualCardNames.value = ''
+  
+  // Create preview URL for new file
+  if (file) {
+    imagePreview.value = URL.createObjectURL(file)
+  } else {
+    imagePreview.value = ''
+  }
 }
 
 const uploadImage = async () => {
