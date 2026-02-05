@@ -64,8 +64,6 @@ const handleRemove = async () => {
     text: 'This card will be removed from your collection',
     icon: 'warning',
     showCancelButton: true,
-    confirmButtonColor: '#FF6B9D',
-    cancelButtonColor: '#6c757d',
     confirmButtonText: 'Remove',
     cancelButtonText: 'Cancel'
   })

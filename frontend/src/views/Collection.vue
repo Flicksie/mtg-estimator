@@ -99,19 +99,6 @@ const loadCollection = async () => {
 }
 
 const removeCard = async (cardId: number) => {
-  const result = await swal({
-    title: 'Remove Card?',
-    text: 'This card will be removed from your collection',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#FF6B9D',
-    cancelButtonColor: '#6c757d',
-    confirmButtonText: 'Remove',
-    cancelButtonText: 'Cancel'
-  })
-
-  if (!result.isConfirmed) return
-
   try {
     await api.removeFromCollection(cardId)
     collection.value = collection.value.filter(c => c.id !== cardId)
@@ -127,8 +114,7 @@ const removeCard = async (cardId: number) => {
     await swal({
       title: 'Error',
       text: 'Error removing card: ' + (err instanceof Error ? err.message : 'Unknown error'),
-      icon: 'error',
-      confirmButtonColor: '#FF6B9D'
+      icon: 'error'
     })
   }
 }
@@ -139,8 +125,6 @@ const clearCollection = async () => {
     text: 'This will remove all cards from your collection. This cannot be undone!',
     icon: 'warning',
     showCancelButton: true,
-    confirmButtonColor: '#FF6B6B',
-    cancelButtonColor: '#6c757d',
     confirmButtonText: 'Clear All',
     cancelButtonText: 'Cancel'
   })
@@ -162,8 +146,7 @@ const clearCollection = async () => {
     await swal({
       title: 'Error',
       text: 'Error clearing collection: ' + (err instanceof Error ? err.message : 'Unknown error'),
-      icon: 'error',
-      confirmButtonColor: '#FF6B9D'
+      icon: 'error'
     })
   }
 }
@@ -193,8 +176,7 @@ const exportCollection = async () => {
     await swal({
       title: 'Error',
       text: 'Error exporting collection: ' + (err instanceof Error ? err.message : 'Unknown error'),
-      icon: 'error',
-      confirmButtonColor: '#FF6B9D'
+      icon: 'error'
     })
   }
 }
