@@ -102,31 +102,19 @@ import CollectionCardItem from '../components/CollectionCardItem.vue'
 import api from '../services/api'
 import type { Card } from '../types'
 import {
-  useCardRemovedAlert,
-  useRemoveCardErrorAlert,
-  useClearCollectionConfirmAlert,
-  useClearedAlert,
-  useClearCollectionErrorAlert,
-  useExportJSONAlert,
-  useExportJSONErrorAlert,
-  useExportMoxfieldAlert,
-  useExportMoxfieldErrorAlert,
-  useExportArchidektAlert,
-  useExportArchidektErrorAlert
+  useCardRemovalAlerts,
+  useClearCollectionAlerts,
+  useExportJSONAlerts,
+  useExportMoxfieldAlerts,
+  useExportArchidektAlerts
 } from '../composables/alerts'
 
 // Alert composables
-const { show: showCardRemovedAlert } = useCardRemovedAlert()
-const { show: showRemoveCardErrorAlert } = useRemoveCardErrorAlert()
-const { show: showClearCollectionConfirmAlert } = useClearCollectionConfirmAlert()
-const { show: showClearedAlert } = useClearedAlert()
-const { show: showClearCollectionErrorAlert } = useClearCollectionErrorAlert()
-const { show: showExportJSONAlert } = useExportJSONAlert()
-const { show: showExportJSONErrorAlert } = useExportJSONErrorAlert()
-const { show: showExportMoxfieldAlert } = useExportMoxfieldAlert()
-const { show: showExportMoxfieldErrorAlert } = useExportMoxfieldErrorAlert()
-const { show: showExportArchidektAlert } = useExportArchidektAlert()
-const { show: showExportArchidektErrorAlert } = useExportArchidektErrorAlert()
+const { showRemoved, showError: showRemoveError } = useCardRemovalAlerts()
+const { showConfirm, showCleared, showError: showClearError } = useClearCollectionAlerts()
+const { showSuccess: showJSONSuccess, showError: showJSONError } = useExportJSONAlerts()
+const { showSuccess: showMoxfieldSuccess, showError: showMoxfieldError } = useExportMoxfieldAlerts()
+const { showSuccess: showArchidektSuccess, showError: showArchidektError } = useExportArchidektAlerts()
 
 const collection = ref<Card[]>([])
 
@@ -148,25 +136,25 @@ const removeCard = async (cardId: number) => {
   try {
     await api.removeFromCollection(cardId)
     collection.value = collection.value.filter(c => c.id !== cardId)
-    await showCardRemovedAlert()
+    await showRemoved()
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : 'Unknown error'
-    await showRemoveCardErrorAlert(errorMsg)
+    await showRemoveError(errorMsg)
   }
 }
 
 const clearCollection = async () => {
-  const result = await showClearCollectionConfirmAlert()
+  const result = await showConfirm()
 
   if (!result.isConfirmed) return
 
   try {
     await api.clearCollection()
     collection.value = []
-    await showClearedAlert()
+    await showCleared()
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : 'Unknown error'
-    await showClearCollectionErrorAlert(errorMsg)
+    await showClearError(errorMsg)
   }
 }
 
@@ -183,10 +171,10 @@ const exportJSON = async () => {
     link.click()
     
     URL.revokeObjectURL(url)
-    await showExportJSONAlert()
+    await showJSONSuccess()
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : 'Unknown error'
-    await showExportJSONErrorAlert(errorMsg)
+    await showJSONError(errorMsg)
   }
 }
 
@@ -224,10 +212,10 @@ const exportMoxfield = async () => {
     link.click()
     
     URL.revokeObjectURL(url)
-    await showExportMoxfieldAlert()
+    await showMoxfieldSuccess()
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : 'Unknown error'
-    await showExportMoxfieldErrorAlert(errorMsg)
+    await showMoxfieldError(errorMsg)
   }
 }
 
@@ -266,10 +254,10 @@ const exportArchidekt = async () => {
     link.click()
     
     URL.revokeObjectURL(url)
-    await showExportArchidektAlert()
+    await showArchidektSuccess()
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : 'Unknown error'
-    await showExportArchidektErrorAlert(errorMsg)
+    await showArchidektError(errorMsg)
   }
 }
 
