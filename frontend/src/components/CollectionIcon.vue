@@ -188,6 +188,13 @@ const getCardStyle = (animation: any) => {
   box-shadow: 0 6px 16px rgba(102, 126, 234, 0.3);
 }
 
+@media screen and (min-width: 769px) {
+  .collection-icon {
+    top: 100px;
+    bottom: auto;
+  }
+}
+
 @media screen and (max-width: 768px) {
   .collection-icon {
     top: auto;

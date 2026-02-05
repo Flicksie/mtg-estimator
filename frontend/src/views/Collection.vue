@@ -213,9 +213,14 @@ onMounted(() => {
   color: white;
 }
 
-.stat-value {
+.stat-box.stat-value {
   background: var(--success-gradient);
   color: white;
+}
+
+.stat-value {
+  color: inherit;
+  background: transparent;
 }
 
 .stat-actions {
