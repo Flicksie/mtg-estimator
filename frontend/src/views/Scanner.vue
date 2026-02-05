@@ -1,24 +1,26 @@
 <template>
   <div>
-    <h1 class="title">Card Scanner</h1>
-    <p class="subtitle">Upload images of your cards for automatic identification</p>
+    <h1 class="title">📸 Smart Card Scanner</h1>
+    <p class="subtitle">Upload card images for AI-powered automatic identification</p>
 
-    <div class="notification" :class="ocrAvailable ? 'is-info' : 'is-warning'">
+    <!-- OCR Status Banner -->
+    <div class="notification scanner-status" :class="ocrAvailable ? 'is-success' : 'is-warning'">
       <p v-if="ocrAvailable">
-        <span class="icon"><i class="fas fa-info-circle"></i></span>
-        OCR is available! Upload card images and we'll try to identify them automatically.
+        <span class="icon"><i class="fas fa-check-circle"></i></span>
+        <strong>✨ AI Scanner Active!</strong> Upload images and we'll identify your cards automatically
       </p>
       <p v-else>
-        <span class="icon"><i class="fas fa-exclamation-triangle"></i></span>
-        OCR is not available. You can still upload images and provide card names manually.
+        <span class="icon"><i class="fas fa-exclamation-circle"></i></span>
+        <strong>Manual Mode</strong> Upload images and enter card names manually
       </p>
     </div>
 
-    <div class="box mb-4">
+    <!-- API Key Input (Optional) -->
+    <div class="box api-key-box">
       <div class="field">
         <label class="label">
           <span class="icon-text">
-            <span class="icon"><i class="fas fa-key"></i></span>
+            <span class="icon">🔑</span>
             <span>Gemini API Key (Optional)</span>
           </span>
         </label>
@@ -27,14 +29,15 @@
             v-model="customGeminiKey"
             class="input" 
             type="password"
-            placeholder="Enter your own Gemini API key (optional)">
+            placeholder="Enter your own API key (optional)">
         </div>
-        <p class="help">Leave empty to use server's key. Your key is stored locally and sent with each request.</p>
+        <p class="help">Your key is stored locally and never shared</p>
       </div>
     </div>
 
-    <div class="box">
-      <div class="file has-name is-boxed is-large is-fullwidth">
+    <!-- File Upload Section -->
+    <div class="box upload-container">
+      <div class="file has-name is-boxed is-fullwidth upload-area">
         <label class="file-label">
           <input 
             class="file-input" 
@@ -44,49 +47,58 @@
             ref="fileInput">
           <span class="file-cta">
             <span class="file-icon">
-              <i class="fas fa-upload"></i>
+              <i class="fas fa-cloud-upload-alt"></i>
             </span>
-            <span class="file-label">
-              Choose a file…
+            <span class="file-label-text">
+              <strong>Drag files or click to upload</strong><br>
+              <small>Supports JPG, PNG, WebP and more</small>
             </span>
           </span>
           <span class="file-name" v-if="selectedFile">
-            {{ selectedFile.name }}
+            ✓ {{ selectedFile.name }}
           </span>
         </label>
       </div>
 
-      <div v-if="imagePreview" class="mt-4">
+      <!-- Image Preview -->
+      <div v-if="imagePreview" class="image-preview-container mt-4">
         <figure class="image">
-          <img :src="imagePreview" alt="Preview" style="max-height: 400px; width: auto; margin: 0 auto; display: block;">
+          <img :src="imagePreview" alt="Preview" class="preview-img">
         </figure>
       </div>
 
+      <!-- Scan Button -->
       <button 
         @click="uploadImage" 
-        :class="['button', 'is-primary', 'is-large', 'is-fullwidth', 'mt-3', { 'is-loading': uploading }]"
+        :class="['button', 'is-primary', 'is-large', 'is-fullwidth', 'mt-4', { 'is-loading': uploading }]"
         :disabled="!selectedFile || uploading">
         <span class="icon">
-          <i class="fas fa-camera"></i>
+          <i class="fas fa-magic"></i>
         </span>
-        <span>Scan Image</span>
+        <span>{{ uploading ? 'Scanning...' : 'Scan Image' }}</span>
       </button>
 
-      <div v-if="error" class="notification is-danger mt-3">
+      <!-- Error Notification -->
+      <div v-if="error" class="notification is-danger mt-4">
         <button @click="error = ''" class="delete"></button>
-        {{ error }}
+        <p><strong>⚠️ Error:</strong> {{ error }}</p>
       </div>
 
-      <div v-if="results" class="mt-5">
-        <h2 class="title is-4">Scan Results</h2>
-        <p class="subtitle is-6">Detected {{ results.num_detected }} card(s)</p>
-
-        <div v-if="results.message" class="notification is-warning">
-          {{ results.message }}
+      <!-- Scan Results -->
+      <div v-if="results" class="mt-6 results-section">
+        <div class="results-header">
+          <h2 class="title is-4">🎯 Scan Results</h2>
+          <p class="subtitle is-6">Detected <strong>{{ results.num_detected }}</strong> card(s)</p>
         </div>
 
+        <!-- Warning Message -->
+        <div v-if="results.message" class="notification is-warning">
+          <p>{{ results.message }}</p>
+        </div>
+
+        <!-- Manual Card Name Entry -->
         <div class="field" v-if="results.num_detected > 0 && results.cards.length === 0">
-          <label class="label">Enter card names (one per line)</label>
+          <label class="label">📝 Enter Card Names (one per line)</label>
           <div class="control">
             <textarea 
               v-model="manualCardNames"
@@ -96,41 +108,53 @@
           </div>
           <button 
             @click="identifyCards"
-            :class="['button', 'is-primary', 'mt-3', { 'is-loading': identifying }]"
+            :class="['button', 'is-primary', 'is-fullwidth', 'mt-3', { 'is-loading': identifying }]"
             :disabled="!manualCardNames || identifying">
             <span class="icon">
-              <i class="fas fa-search"></i>
+              <i class="fas fa-magnifying-glass"></i>
             </span>
-            <span>Identify Cards</span>
+            <span>{{ identifying ? 'Identifying...' : 'Identify Cards' }}</span>
           </button>
         </div>
 
-        <div v-if="identifiedCards.length > 0" class="mt-4">
-          <h3 class="title is-5">Identified Cards</h3>
+        <!-- Identified Cards Grid -->
+        <div v-if="identifiedCards.length > 0" class="mt-5">
+          <h3 class="title is-4">✨ Identified Cards</h3>
           
-          <div class="columns is-multiline">
-            <div v-for="(card, index) in identifiedCards" :key="index" class="column is-one-third">
-              <div class="card">
+          <div class="columns is-multiline identified-grid">
+            <div 
+              v-for="(card, index) in identifiedCards" 
+              :key="index" 
+              class="column is-one-third-desktop is-half-tablet is-full-mobile"
+            >
+              <div class="card scanner-card">
+                <!-- Card Image -->
                 <div class="card-image" v-if="card.image_uri">
                   <figure class="image is-4by3">
-                    <img :src="card.image_uri" :alt="card.name">
+                    <img :src="card.image_uri" :alt="card.name" class="scanner-card-img">
                   </figure>
                 </div>
+
+                <!-- Card Info -->
                 <div class="card-content">
-                  <p class="title is-5">{{ card.name }}</p>
-                  <p class="subtitle is-6" v-if="card.set">{{ card.set }}</p>
-                  <p class="has-text-weight-bold has-text-success" v-if="card.price">
-                    ${{ card.price.toFixed(2) }}
-                  </p>
+                  <p class="title is-6 card-name">{{ card.name }}</p>
+                  <p class="subtitle is-7" v-if="card.set">{{ card.set }}</p>
+                  
+                  <div class="card-price" v-if="card.price">
+                    <p class="price-label">💰</p>
+                    <p class="price-value">${{ card.price.toFixed(2) }}</p>
+                  </div>
+                  
                   <p class="has-text-danger" v-else-if="'found' in card && !card.found">
                     Card not found
                   </p>
+                  
                   <button 
                     @click="addToCollection(card, $event)"
-                    class="button is-small is-success is-fullwidth mt-2"
+                    class="button is-success is-fullwidth mt-3"
                     v-if="'found' in card ? card.found !== false : true">
                     <span class="icon">
-                      <i class="fas fa-plus"></i>
+                      <i class="fas fa-plus-circle"></i>
                     </span>
                     <span>Add to Collection</span>
                   </button>
@@ -139,9 +163,13 @@
             </div>
           </div>
 
-          <div class="notification is-success is-light mt-4">
-            <p class="title is-5">Total Estimated Value</p>
-            <p class="title is-3">${{ totalValue.toFixed(2) }}</p>
+          <!-- Total Value Summary -->
+          <div class="total-value-box mt-5">
+            <div class="total-value-content">
+              <p class="total-label">💎 Total Estimated Value</p>
+              <p class="total-amount">${{ totalValue.toFixed(2) }}</p>
+            </div>
+            <div class="total-icon">💰</div>
           </div>
         </div>
       </div>
@@ -170,7 +198,6 @@ const imagePreview = ref('')
 
 const { addAnimation, incrementCount } = useCollection()
 
-// Load saved key from localStorage
 onMounted(() => {
   const savedKey = localStorage.getItem('gemini_api_key')
   if (savedKey) {
@@ -179,7 +206,6 @@ onMounted(() => {
   checkOcrStatus()
 })
 
-// Save key to localStorage when it changes
 watch(customGeminiKey, (newKey) => {
   if (newKey) {
     localStorage.setItem('gemini_api_key', newKey)
@@ -192,7 +218,6 @@ const onFileSelected = (event: Event) => {
   const target = event.target as HTMLInputElement
   const file = target.files?.[0] || null
   
-  // Clean up previous preview URL
   if (imagePreview.value) {
     URL.revokeObjectURL(imagePreview.value)
   }
@@ -202,7 +227,6 @@ const onFileSelected = (event: Event) => {
   identifiedCards.value = []
   manualCardNames.value = ''
   
-  // Create preview URL for new file
   if (file) {
     imagePreview.value = URL.createObjectURL(file)
   } else {
@@ -221,7 +245,6 @@ const uploadImage = async () => {
   try {
     results.value = await api.scanImage(selectedFile.value, customGeminiKey.value || undefined)
     
-    // If cards were automatically identified
     if (results.value.cards && results.value.cards.length > 0) {
       identifiedCards.value = results.value.cards.filter(c => c.name)
       calculateTotal()
@@ -267,7 +290,6 @@ const addToCollection = async (card: Card, event: Event) => {
   if (!buttonElement) return
 
   try {
-    // Trigger the animation
     addAnimation(buttonElement, {
       name: card.name,
       set: card.set,
@@ -283,7 +305,6 @@ const addToCollection = async (card: Card, event: Event) => {
     })
 
     incrementCount()
-    // Optional: Show a brief success message
     buttonElement.classList.add('is-loading')
     setTimeout(() => {
       buttonElement.classList.remove('is-loading')
@@ -302,3 +323,208 @@ const checkOcrStatus = async () => {
   }
 }
 </script>
+
+<style scoped>
+.scanner-status {
+  border-radius: 20px;
+  margin-bottom: 2rem;
+  border: none;
+}
+
+.api-key-box {
+  border-radius: 20px;
+  border: 2px solid #F0F0F0;
+  margin-bottom: 2rem;
+}
+
+.upload-container {
+  border-radius: 20px;
+  border: 2px solid #F0F0F0;
+}
+
+.upload-area {
+  background: linear-gradient(135deg, rgba(255, 107, 157, 0.05) 0%, rgba(192, 107, 255, 0.05) 100%);
+  border: 2px dashed #FF6B9D;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.upload-area:hover {
+  background: linear-gradient(135deg, rgba(255, 107, 157, 0.1) 0%, rgba(192, 107, 255, 0.1) 100%);
+  border-color: #C06BFF;
+}
+
+.file-label {
+  width: 100%;
+  cursor: pointer;
+}
+
+.file-cta {
+  flex-direction: column;
+  gap: 1rem;
+  padding: 2rem;
+}
+
+.file-icon {
+  font-size: 2.5rem;
+}
+
+.file-label-text {
+  text-align: center;
+  color: #2C2C7C;
+}
+
+.file-label-text strong {
+  font-weight: 700;
+  font-size: 1.1rem;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.file-label-text small {
+  color: #888899;
+  display: block;
+}
+
+.image-preview-container {
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+.preview-img {
+  max-height: 400px;
+  width: auto;
+  margin: 0 auto;
+  display: block;
+  border-radius: 20px;
+}
+
+.results-section {
+  animation: slideIn 0.6s ease;
+}
+
+.results-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #F0F0F0;
+}
+
+.identified-grid {
+  animation: fadeInUp 0.6s ease;
+}
+
+.scanner-card {
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.scanner-card:hover {
+  transform: translateY(-12px) scale(1.02);
+  box-shadow: var(--shadow-lg);
+}
+
+.scanner-card-img {
+  transition: transform 0.4s ease;
+  object-fit: cover;
+}
+
+.scanner-card:hover .scanner-card-img {
+  transform: scale(1.08);
+}
+
+.card-name {
+  color: #2C2C7C;
+  font-weight: 800;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-price {
+  background: linear-gradient(135deg, #FFB347 0%, #FF8C47 100%);
+  color: white;
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: center;
+  margin: 1rem 0;
+}
+
+.price-label {
+  font-size: 1.5rem;
+  margin: 0;
+}
+
+.price-value {
+  font-size: 1.5rem;
+  font-weight: 900;
+  margin: 0;
+}
+
+.total-value-box {
+  background: linear-gradient(135deg, #11D8A2 0%, #00D4FF 100%);
+  color: white;
+  border-radius: 24px;
+  padding: 2.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: var(--shadow-lg);
+  animation: float 3s ease-in-out infinite;
+}
+
+.total-label {
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.95;
+  margin: 0;
+}
+
+.total-amount {
+  font-size: 2.5rem;
+  font-weight: 900;
+  margin: 0.5rem 0 0 0;
+}
+
+.total-icon {
+  font-size: 4rem;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .total-value-box {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+
+  .file-cta {
+    padding: 1.5rem;
+  }
+}
+</style>
