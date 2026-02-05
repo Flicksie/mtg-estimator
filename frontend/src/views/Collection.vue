@@ -62,52 +62,20 @@
 
     <!-- Collection Grid -->
     <div v-else class="collection-grid">
-      <div 
+      <CollectionCardItem 
         v-for="(card, index) in collection" 
         :key="card.id" 
-        class="collection-card-wrapper"
-        :style="{ 'animation-delay': `${index * 0.05}s` }"
-      >
-        <div class="card collection-card">
-          <!-- Card Image -->
-          <div class="card-image" v-if="card.image_uri">
-            <img :src="card.image_uri" :alt="card.name" class="collection-card-img">
-            <div class="card-rarity-badge"><i class="fas fa-star"></i></div>
-          </div>
-
-          <!-- Card Content -->
-          <div class="card-content">
-            <p class="title is-6 card-name">{{ card.name }}</p>
-            <p class="subtitle is-7 card-set" v-if="card.set">{{ card.set }}</p>
-            <div class="price-display">
-              <p class="price-label">Estimated Value</p>
-              <p class="price-amount">${{ (card.price || 0).toFixed(2) }}</p>
-            </div>
-            <p class="is-size-7 date-added">
-              <i class="fas fa-calendar"></i> {{ formatDate(card.added_date) }}
-            </p>
-          </div>
-
-          <!-- Card Footer -->
-          <footer class="card-footer">
-            <a 
-              @click.prevent="card.id && removeCard(card.id)" 
-              class="card-footer-item remove-btn"
-            >
-              <span class="icon">
-                <i class="fas fa-trash-alt"></i>
-              </span>
-              <span>Remove</span>
-            </a>
-          </footer>
-        </div>
-      </div>
+        :card="card"
+        :index="index"
+        @remove="removeCard"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import CollectionCardItem from '../components/CollectionCardItem.vue'
 import api from '../services/api'
 import type { Card } from '../types'
 
@@ -273,26 +241,10 @@ onMounted(() => {
 }
 
 .collection-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
   animation: fadeInUp 0.6s ease;
-}
-
-.collection-card {
-  position: relative;
-  border-radius: 20px;
-  overflow: hidden;
-  animation: slideIn 0.6s ease both;
-  box-shadow: var(--shadow-md);
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 @keyframes fadeInUp {
@@ -304,103 +256,6 @@ onMounted(() => {
   }
 }
 
-.collection-card-img {
-  transition: transform 0.4s ease;
-  object-fit: cover;
-}
-
-.collection-card:hover .collection-card-img {
-  transform: scale(1.08) rotate(1deg);
-}
-
-.card-image {
-  position: relative;
-  border-radius: 20px 20px 0 0;
-  overflow: hidden;
-}
-
-.card-rarity-badge {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  font-size: 1.5rem;
-  background: rgba(255, 255, 255, 0.9);
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.card-content {
-  padding: 1.5rem;
-}
-
-.card-name {
-  color: #2C2C7C;
-  font-weight: 800;
-  margin-bottom: 0.5rem;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.card-set {
-  color: #888899;
-  font-weight: 600;
-}
-
-.price-display {
-  background: linear-gradient(135deg, #FFB347 0%, #FF8C47 100%);
-  color: white;
-  border-radius: 12px;
-  padding: 1rem;
-  margin: 1rem 0;
-}
-
-.price-label {
-  font-size: 0.75rem;
-  font-weight: 700;
-  opacity: 0.9;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin: 0;
-}
-
-.price-amount {
-  font-size: 1.5rem;
-  font-weight: 900;
-  margin: 0.25rem 0 0 0;
-}
-
-.date-added {
-  color: #888899;
-  margin-top: 0.75rem;
-}
-
-.card-footer {
-  background: transparent;
-  border-top: 1px solid #F0F0F0;
-  padding: 0.75rem;
-}
-
-.remove-btn {
-  color: #FF6B9D;
-  font-weight: 700;
-  transition: all 0.3s ease;
-  border-radius: var(--border-radius-sm);
-  text-transform: uppercase;
-  font-size: 0.85rem;
-}
-
-.remove-btn:hover {
-  background: rgba(255, 107, 157, 0.1);
-  color: #EE5A6F;
-}
-
 @media screen and (max-width: 768px) {
   .collection-stats {
     grid-template-columns: 1fr;
@@ -410,9 +265,17 @@ onMounted(() => {
     flex-direction: column;
     text-align: center;
   }
+}
 
+@media screen and (min-width: 769px) and (max-width: 1024px) {
   .collection-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media screen and (min-width: 1025px) {
+  .collection-grid {
+    grid-template-columns: repeat(5, 1fr);
   }
 }
 </style>
