@@ -98,12 +98,35 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { useSwal } from '../composables/useSwal'
 import CollectionCardItem from '../components/CollectionCardItem.vue'
 import api from '../services/api'
 import type { Card } from '../types'
+import {
+  useCardRemovedAlert,
+  useRemoveCardErrorAlert,
+  useClearCollectionConfirmAlert,
+  useClearedAlert,
+  useClearCollectionErrorAlert,
+  useExportJSONAlert,
+  useExportJSONErrorAlert,
+  useExportMoxfieldAlert,
+  useExportMoxfieldErrorAlert,
+  useExportArchidektAlert,
+  useExportArchidektErrorAlert
+} from '../composables/alerts'
 
-const { fire: swal } = useSwal()
+// Alert composables
+const { show: showCardRemovedAlert } = useCardRemovedAlert()
+const { show: showRemoveCardErrorAlert } = useRemoveCardErrorAlert()
+const { show: showClearCollectionConfirmAlert } = useClearCollectionConfirmAlert()
+const { show: showClearedAlert } = useClearedAlert()
+const { show: showClearCollectionErrorAlert } = useClearCollectionErrorAlert()
+const { show: showExportJSONAlert } = useExportJSONAlert()
+const { show: showExportJSONErrorAlert } = useExportJSONErrorAlert()
+const { show: showExportMoxfieldAlert } = useExportMoxfieldAlert()
+const { show: showExportMoxfieldErrorAlert } = useExportMoxfieldErrorAlert()
+const { show: showExportArchidektAlert } = useExportArchidektAlert()
+const { show: showExportArchidektErrorAlert } = useExportArchidektErrorAlert()
 
 const collection = ref<Card[]>([])
 
@@ -125,82 +148,25 @@ const removeCard = async (cardId: number) => {
   try {
     await api.removeFromCollection(cardId)
     collection.value = collection.value.filter(c => c.id !== cardId)
-    
-    await swal({
-      title: 'Removed!',
-      text: 'Card removed from collection',
-      icon: 'success',
-      timer: 1500,
-      timerProgressBar: true
-    })
+    await showCardRemovedAlert()
   } catch (err) {
-    await swal({
-      title: 'Error',
-      text: 'Error removing card: ' + (err instanceof Error ? err.message : 'Unknown error'),
-      icon: 'error'
-    })
+    const errorMsg = err instanceof Error ? err.message : 'Unknown error'
+    await showRemoveCardErrorAlert(errorMsg)
   }
 }
 
 const clearCollection = async () => {
-  const result = await swal({
-    title: 'Clear Collection?',
-    text: 'This will remove all cards from your collection. This cannot be undone!',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonText: 'Clear All',
-    cancelButtonText: 'Cancel'
-  })
+  const result = await showClearCollectionConfirmAlert()
 
   if (!result.isConfirmed) return
 
   try {
     await api.clearCollection()
     collection.value = []
-    
-    await swal({
-      title: 'Cleared!',
-      text: 'Your collection has been cleared',
-      icon: 'success',
-      timer: 1500,
-      timerProgressBar: true
-    })
+    await showClearedAlert()
   } catch (err) {
-    await swal({
-      title: 'Error',
-      text: 'Error clearing collection: ' + (err instanceof Error ? err.message : 'Unknown error'),
-      icon: 'error'
-    })
-  }
-}
-
-const exportCollection = async () => {
-  try {
-    const data = await api.exportCollection()
-    const dataStr = JSON.stringify(data, null, 2)
-    const dataBlob = new Blob([dataStr], { type: 'application/json' })
-    
-    const url = URL.createObjectURL(dataBlob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `mtg-collection-${new Date().toISOString().split('T')[0]}.json`
-    link.click()
-    
-    URL.revokeObjectURL(url)
-    
-    await swal({
-      title: 'Exported!',
-      text: 'Your collection has been exported',
-      icon: 'success',
-      timer: 1500,
-      timerProgressBar: true
-    })
-  } catch (err) {
-    await swal({
-      title: 'Error',
-      text: 'Error exporting collection: ' + (err instanceof Error ? err.message : 'Unknown error'),
-      icon: 'error'
-    })
+    const errorMsg = err instanceof Error ? err.message : 'Unknown error'
+    await showClearCollectionErrorAlert(errorMsg)
   }
 }
 
@@ -217,20 +183,10 @@ const exportJSON = async () => {
     link.click()
     
     URL.revokeObjectURL(url)
-    
-    await swal({
-      title: 'Exported!',
-      text: 'Your collection has been exported as JSON',
-      icon: 'success',
-      timer: 1500,
-      timerProgressBar: true
-    })
+    await showExportJSONAlert()
   } catch (err) {
-    await swal({
-      title: 'Error',
-      text: 'Error exporting collection: ' + (err instanceof Error ? err.message : 'Unknown error'),
-      icon: 'error'
-    })
+    const errorMsg = err instanceof Error ? err.message : 'Unknown error'
+    await showExportJSONErrorAlert(errorMsg)
   }
 }
 
@@ -268,20 +224,10 @@ const exportMoxfield = async () => {
     link.click()
     
     URL.revokeObjectURL(url)
-    
-    await swal({
-      title: 'Exported to Moxfield!',
-      html: 'Your collection has been exported as CSV.<br><br>You can import this file into Moxfield by:<br>1. Go to <a href="https://www.moxfield.com" target="_blank" rel="noopener noreferrer">moxfield.com</a><br>2. Create or edit a deck<br>3. Use the import function to upload the CSV file',
-      icon: 'success',
-      timer: 35000,
-      timerProgressBar: true
-    })
+    await showExportMoxfieldAlert()
   } catch (err) {
-    await swal({
-      title: 'Error',
-      text: 'Error exporting to Moxfield: ' + (err instanceof Error ? err.message : 'Unknown error'),
-      icon: 'error'
-    })
+    const errorMsg = err instanceof Error ? err.message : 'Unknown error'
+    await showExportMoxfieldErrorAlert(errorMsg)
   }
 }
 
@@ -320,20 +266,10 @@ const exportArchidekt = async () => {
     link.click()
     
     URL.revokeObjectURL(url)
-    
-    await swal({
-      title: 'Exported to Archidekt!',
-      html: 'Your collection has been exported as TXT.<br><br>You can import this file into Archidekt by:<br>1. Go to <a href="https://www.archidekt.com" target="_blank" rel="noopener noreferrer">archidekt.com</a><br>2. Create or edit a deck<br>3. Use the import/paste function to add the cards',
-      icon: 'success',
-      timer: 35000,
-      timerProgressBar: true
-    })
+    await showExportArchidektAlert()
   } catch (err) {
-    await swal({
-      title: 'Error',
-      text: 'Error exporting to Archidekt: ' + (err instanceof Error ? err.message : 'Unknown error'),
-      icon: 'error'
-    })
+    const errorMsg = err instanceof Error ? err.message : 'Unknown error'
+    await showExportArchidektErrorAlert(errorMsg)
   }
 }
 
