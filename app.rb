@@ -44,12 +44,10 @@ class MTGEstimatorApp
   def call(env)
     request = Rack::Request.new(env)
     
-    # CORS headers with allowed origins
-    allowed_origins = ['http://127.0.0.1:5004', 'http://localhost:5004']
-    request_origin = request.get_header('HTTP_ORIGIN')
-    allowed_origin = allowed_origins.include?(request_origin) ? request_origin : allowed_origins.first
+    # CORS headers - allow all origins
+    request_origin = request.get_header('HTTP_ORIGIN') || '*'
     cors_headers = {
-      'Access-Control-Allow-Origin' => allowed_origin,
+      'Access-Control-Allow-Origin' => request_origin,
       'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
       'Access-Control-Allow-Headers' => 'Content-Type, Accept',
       'Access-Control-Allow-Credentials' => 'true',
@@ -77,7 +75,7 @@ class MTGEstimatorApp
     method = request.request_method
 
     case [method, path]
-    when ['GET', '/api/statsa']
+    when ['GET', '/api/stats']
       api_stats(env)
     when ['GET', '/api/collection/list']
       api_collection_list(env)

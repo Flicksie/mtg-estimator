@@ -73,7 +73,7 @@ const getCardStyle = (animation: any) => {
 
 <style scoped>
 .collection-icon {
-  position: fixed;
+  position: fixed !important;
   top: 100px;
   right: 25px;
   z-index: 1000;
