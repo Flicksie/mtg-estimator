@@ -37,6 +37,44 @@
 
     <!-- File Upload Section -->
     <div class="box upload-container">
+      <!-- Camera and Upload Options -->
+      <div class="upload-options mb-4">
+        <button 
+          @click="openCamera" 
+          class="button is-info is-medium"
+          :disabled="!cameraSupported">
+          <span class="icon">
+            <i class="fas fa-camera"></i>
+          </span>
+          <span>Use Camera</span>
+        </button>
+        <span class="mx-2 has-text-grey">or</span>
+      </div>
+
+      <!-- Camera Modal -->
+      <div class="modal" :class="{ 'is-active': showCamera }">
+        <div class="modal-background" @click="closeCamera"></div>
+        <div class="modal-content camera-modal">
+          <div class="box">
+            <h3 class="title is-4">Capture Card Photo</h3>
+            <video ref="videoElement" autoplay playsinline class="camera-video"></video>
+            <canvas ref="canvasElement" style="display: none;"></canvas>
+            <div class="buttons mt-4">
+              <button @click="capturePhoto" class="button is-primary is-large">
+                <span class="icon">
+                  <i class="fas fa-camera"></i>
+                </span>
+                <span>Capture</span>
+              </button>
+              <button @click="closeCamera" class="button is-light is-large">
+                <span>Cancel</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        <button class="modal-close is-large" @click="closeCamera"></button>
+      </div>
+
       <div class="file has-name is-boxed is-fullwidth upload-area">
         <label class="file-label">
           <input 
@@ -195,6 +233,11 @@ const ocrAvailable = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
 const customGeminiKey = ref('')
 const imagePreview = ref('')
+const showCamera = ref(false)
+const videoElement = ref<HTMLVideoElement | null>(null)
+const canvasElement = ref<HTMLCanvasElement | null>(null)
+const mediaStream = ref<MediaStream | null>(null)
+const cameraSupported = ref(true)
 
 const { addAnimation, incrementCount } = useCollection()
 
@@ -204,6 +247,11 @@ onMounted(() => {
     customGeminiKey.value = savedKey
   }
   checkOcrStatus()
+  
+  // Check if camera is supported
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    cameraSupported.value = false
+  }
 })
 
 watch(customGeminiKey, (newKey) => {
@@ -281,6 +329,67 @@ const calculateTotal = () => {
   totalValue.value = identifiedCards.value.reduce((sum, card) => {
     return sum + (card.price || 0)
   }, 0)
+}
+
+const openCamera = async () => {
+  try {
+    showCamera.value = true
+    await new Promise(resolve => setTimeout(resolve, 100)) // Wait for modal to render
+    
+    if (!videoElement.value) return
+    
+    const stream = await navigator.mediaDevices.getUserMedia({ 
+      video: { 
+        facingMode: 'environment', // Use back camera on mobile
+        width: { ideal: 1920 },
+        height: { ideal: 1080 }
+      } 
+    })
+    
+    mediaStream.value = stream
+    videoElement.value.srcObject = stream
+  } catch (err) {
+    error.value = 'Failed to access camera: ' + (err instanceof Error ? err.message : 'Unknown error')
+    closeCamera()
+  }
+}
+
+const closeCamera = () => {
+  if (mediaStream.value) {
+    mediaStream.value.getTracks().forEach(track => track.stop())
+    mediaStream.value = null
+  }
+  showCamera.value = false
+}
+
+const capturePhoto = () => {
+  if (!videoElement.value || !canvasElement.value) return
+  
+  const video = videoElement.value
+  const canvas = canvasElement.value
+  
+  // Set canvas dimensions to match video
+  canvas.width = video.videoWidth
+  canvas.height = video.videoHeight
+  
+  // Draw current video frame to canvas
+  const ctx = canvas.getContext('2d')
+  if (ctx) {
+    ctx.drawImage(video, 0, 0)
+    
+    // Convert canvas to blob and create file
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const file = new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' })
+        selectedFile.value = file
+        imagePreview.value = URL.createObjectURL(file)
+        results.value = null
+        identifiedCards.value = []
+        manualCardNames.value = ''
+      }
+      closeCamera()
+    }, 'image/jpeg', 0.9)
+  }
 }
 
 const addToCollection = async (card: Card, event: Event) => {
@@ -527,4 +636,31 @@ const checkOcrStatus = async () => {
     padding: 1.5rem;
   }
 }
+
+.upload-options {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.camera-modal {
+  max-width: 90%;
+  width: 800px;
+}
+
+.camera-video {
+  width: 100%;
+  border-radius: 12px;
+  background: #000;
+  max-height: 70vh;
+  object-fit: contain;
+}
+
+.camera-modal .buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
 </style>
+
