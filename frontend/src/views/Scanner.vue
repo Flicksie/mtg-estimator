@@ -92,7 +92,7 @@
             @change="onFileSelected"
             accept="image/*"
             ref="fileInput">
-          <span class="file-cta">
+          <span v-if="!imagePreview" class="file-cta">
             <span class="file-icon">
               <i class="fas fa-cloud-upload-alt"></i>
             </span>
@@ -101,17 +101,16 @@
               <small>Supports JPG, PNG, WebP and more</small>
             </span>
           </span>
-          <span class="file-name" v-if="selectedFile">
-            <i class="fas fa-check"></i> {{ selectedFile.name }}
-          </span>
+          <div v-else class="image-preview-inline">
+            <figure class="image">
+              <img :src="imagePreview" alt="Preview" class="preview-img-inline">
+            </figure>
+            <span class="file-name mt-3">
+              <i class="fas fa-check"></i> {{ selectedFile?.name }}
+            </span>
+            <p class="help mt-2">Click or drag to replace</p>
+          </div>
         </label>
-      </div>
-
-      <!-- Image Preview -->
-      <div v-if="imagePreview" class="image-preview-container mt-4">
-        <figure class="image">
-          <img :src="imagePreview" alt="Preview" class="preview-img">
-        </figure>
       </div>
 
       <!-- Scan Button -->
@@ -230,7 +229,8 @@ const uploadImage = async () => {
     results.value = await api.scanImage(selectedFile.value, customGeminiKey.value || undefined)
     
     if (results.value.cards && results.value.cards.length > 0) {
-      identifiedCards.value = results.value.cards.filter(c => c.name)
+      identifiedCards.value = results.value.cards.filter(c => c.name && c.price && c.price > 0)
+      failedCards.value = results.value.cards.filter(c => !c.name || !c.price || c.price === 0)
       calculateTotal()
     }
   } catch (err) {
@@ -253,8 +253,8 @@ const identifyCards = async () => {
 
     const data = await api.identifyCards(cardNames)
     const allCards = data.cards || []
-    identifiedCards.value = allCards.filter((c: Card) => !c.error && c.price_usd)
-    failedCards.value = allCards.filter((c: Card) => c.error || !c.price_usd)
+    identifiedCards.value = allCards.filter((c: Card) => !c.error && c.price && c.price > 0)
+    failedCards.value = allCards.filter((c: Card) => c.error || !c.price || c.price === 0)
     totalValue.value = data.total_value
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to identify cards'
@@ -416,8 +416,8 @@ const loadDemoCards = async () => {
 
     if (allCards.length > 0) {
       results.value = { cards: allCards }
-      identifiedCards.value = allCards.filter(c => !c.error && c.price)
-      failedCards.value = allCards.filter(c => c.error || !c.price)
+      identifiedCards.value = allCards.filter(c => !c.error && c.price && c.price > 0)
+      failedCards.value = allCards.filter(c => c.error || !c.price || c.price === 0)
       calculateTotal()
     } else {
       error.value = 'Failed to load demo cards'
@@ -491,6 +491,23 @@ const loadDemoCards = async () => {
 .file-label-text small {
   color: #888899;
   display: block;
+}
+
+.image-preview-inline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  width: 100%;
+}
+
+.preview-img-inline {
+  max-height: 300px;
+  max-width: 100%;
+  width: auto;
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
 }
 
 .image-preview-container {
