@@ -1,7 +1,7 @@
 # Puma configuration file
 
 # Bind to all interfaces for Codespaces/dev containers
-bind 'tcp://0.0.0.0:5000'
+bind 'tcp://0.0.0.0:5004'
 
 # Development settings
 environment ENV.fetch('RACK_ENV', 'development')

@@ -21,10 +21,9 @@ module MTGEstimator
       request = Rack::Request.new(env)
       response = Rack::Response.new
       
-      # Set CORS headers aligned with app.rb
-      allowed_origins = ['http://127.0.0.1:5000', 'http://localhost:5000']
-      origin = request.get_header('HTTP_ORIGIN')
-      response["Access-Control-Allow-Origin"] = allowed_origins.include?(origin) ? origin : allowed_origins.first
+      # Set CORS headers to allow any origin
+      request_origin = request.get_header('HTTP_ORIGIN')
+      response["Access-Control-Allow-Origin"] = request_origin || '*'
       response["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
       response["Access-Control-Allow-Headers"] = "Content-Type, Accept"
       response["Access-Control-Allow-Credentials"] = "true"

@@ -25,7 +25,7 @@ if CODESPACES
   puts "🚀 MTG Estimator running in GitHub Codespaces"
   puts "   Codespace: #{CODESPACE_NAME}"
   puts "   Environment: #{ENVIRONMENT}"
-  puts "   Port: 5000"
+  puts "   Port: 5004"
 end
 
 
