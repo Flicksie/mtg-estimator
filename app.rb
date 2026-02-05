@@ -45,7 +45,7 @@ class MTGEstimatorApp
     request = Rack::Request.new(env)
     
     # CORS headers with allowed origins
-    allowed_origins = ['http://127.0.0.1:5000', 'http://localhost:5000']
+    allowed_origins = ['http://127.0.0.1:5004', 'http://localhost:5004']
     request_origin = request.get_header('HTTP_ORIGIN')
     allowed_origin = allowed_origins.include?(request_origin) ? request_origin : allowed_origins.first
     cors_headers = {
@@ -174,6 +174,6 @@ end
 # Run with: ruby app.rb
 if __FILE__ == $PROGRAM_NAME
   require 'rack/handler/puma'
-  puts "Starting MTG Estimator on http://0.0.0.0:5000"
-  Rack::Handler::Puma.run(MTGEstimatorApp.new, Host: '0.0.0.0', Port: 5000)
+  puts "Starting MTG Estimator on http://0.0.0.0:5004"
+  Rack::Handler::Puma.run(MTGEstimatorApp.new, Host: '0.0.0.0', Port: 5004)
 end
