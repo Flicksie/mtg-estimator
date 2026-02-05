@@ -126,7 +126,7 @@
                     Card not found
                   </p>
                   <button 
-                    @click="addToCollection(card)"
+                    @click="addToCollection(card, $event)"
                     class="button is-small is-success is-fullwidth mt-2"
                     v-if="'found' in card ? card.found !== false : true">
                     <span class="icon">
@@ -153,6 +153,7 @@
 import { ref, onMounted, watch } from 'vue'
 import api from '../services/api'
 import type { Card, ScanResult } from '../types'
+import { useCollection } from '../composables/useCollection'
 
 const selectedFile = ref<File | null>(null)
 const uploading = ref(false)
@@ -166,6 +167,8 @@ const ocrAvailable = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
 const customGeminiKey = ref('')
 const imagePreview = ref('')
+
+const { addAnimation, incrementCount } = useCollection()
 
 // Load saved key from localStorage
 onMounted(() => {
@@ -257,8 +260,21 @@ const calculateTotal = () => {
   }, 0)
 }
 
-const addToCollection = async (card: Card) => {
+const addToCollection = async (card: Card, event: Event) => {
+  const button = event.target as HTMLElement
+  const buttonElement = button.closest('button') as HTMLButtonElement
+  
+  if (!buttonElement) return
+
   try {
+    // Trigger the animation
+    addAnimation(buttonElement, {
+      name: card.name,
+      set: card.set,
+      price: card.price || 0,
+      image_uri: card.image_uri || ''
+    })
+    
     await api.addToCollection({
       name: card.name,
       set: card.set,
@@ -266,7 +282,12 @@ const addToCollection = async (card: Card) => {
       image_uri: card.image_uri || ''
     })
 
-    alert('Card added to collection!')
+    incrementCount()
+    // Optional: Show a brief success message
+    buttonElement.classList.add('is-loading')
+    setTimeout(() => {
+      buttonElement.classList.remove('is-loading')
+    }, 500)
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to add card to collection'
   }

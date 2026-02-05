@@ -69,7 +69,10 @@
           </div>
 
           <div class="buttons mt-4">
-            <button @click="addToCollection" class="button is-success">
+            <button 
+              @click="addToCollection" 
+              class="button is-success"
+              ref="addButton">
               <span class="icon">
                 <i class="fas fa-plus"></i>
               </span>
@@ -97,12 +100,16 @@
 import { ref } from 'vue'
 import api from '../services/api'
 import type { SearchResult } from '../types'
+import { useCollection } from '../composables/useCollection'
 
 const query = ref('')
 const card = ref<SearchResult | null>(null)
 const loading = ref(false)
 const error = ref('')
 const addedMessage = ref('')
+const addButton = ref<HTMLButtonElement | null>(null)
+
+const { addAnimation, incrementCount } = useCollection()
 
 const searchCard = async () => {
   if (!query.value.trim()) return
@@ -122,10 +129,22 @@ const searchCard = async () => {
 }
 
 const addToCollection = async () => {
-  if (!card.value) return
+  if (!card.value || !addButton.value) return
+
+  console.log('Adding to collection, button element:', addButton.value)
 
   try {
     const price = card.value.prices.usd || 0
+    
+    // Trigger the animation
+    addAnimation(addButton.value, {
+      name: card.value.name,
+      set: card.value.set,
+      price: price,
+      image_uri: card.value.image_uri
+    })
+    
+    console.log('Animation triggered for:', card.value.name)
     
     await api.addToCollection({
       name: card.value.name,
@@ -134,9 +153,12 @@ const addToCollection = async () => {
       image_uri: card.value.image_uri
     })
 
+    incrementCount()
     addedMessage.value = 'Card added to collection!'
+    console.log('Card added successfully')
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to add card to collection'
+    console.error('Error adding to collection:', err)
   }
 }
 </script>
