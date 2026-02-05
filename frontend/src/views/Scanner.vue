@@ -135,6 +135,7 @@
       <CardResults 
         :results="results"
         :identified-cards="identifiedCards"
+        :failed-cards="failedCards"
         :total-value="totalValue"
         :identifying="identifying"
         :manual-card-names="manualCardNames"
@@ -160,6 +161,7 @@ const error = ref('')
 const results = ref<ScanResult | null>(null)
 const manualCardNames = ref('')
 const identifiedCards = ref<Card[]>([])
+const failedCards = ref<Card[]>([])
 const totalValue = ref(0)
 const ocrAvailable = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
@@ -205,6 +207,7 @@ const onFileSelected = (event: Event) => {
   selectedFile.value = file
   results.value = null
   identifiedCards.value = []
+  failedCards.value = []
   manualCardNames.value = ''
   
   if (file) {
@@ -221,6 +224,7 @@ const uploadImage = async () => {
   error.value = ''
   results.value = null
   identifiedCards.value = []
+  failedCards.value = []
 
   try {
     results.value = await api.scanImage(selectedFile.value, customGeminiKey.value || undefined)
@@ -248,7 +252,9 @@ const identifyCards = async () => {
       .filter(name => name.length > 0)
 
     const data = await api.identifyCards(cardNames)
-    identifiedCards.value = data.cards
+    const allCards = data.cards || []
+    identifiedCards.value = allCards.filter((c: Card) => !c.error && c.price_usd)
+    failedCards.value = allCards.filter((c: Card) => c.error || !c.price_usd)
     totalValue.value = data.total_value
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to identify cards'
@@ -379,18 +385,19 @@ const loadDemoCards = async () => {
   error.value = ''
   results.value = null
   identifiedCards.value = []
+  failedCards.value = []
 
   try {
     // Demo card names to fetch
     const demoCardNames = ['Lightning Bolt', 'Black Lotus', 'Shock', 'Counterspell', 'Snapcaster Mage']
-    const mockCards = []
+    const allCards = []
 
     // Fetch real card data from API for each demo card
     for (const cardName of demoCardNames) {
       try {
         const searchResult = await api.searchCard(cardName)
         if (searchResult) {
-          mockCards.push({
+          allCards.push({
             name: searchResult.name,
             set: searchResult.set,
             price: searchResult.prices.usd || 0,
@@ -399,12 +406,18 @@ const loadDemoCards = async () => {
         }
       } catch (err) {
         console.warn(`Failed to fetch ${cardName}:`, err)
+        allCards.push({
+          name: cardName,
+          price: null,
+          error: 'Price not found'
+        })
       }
     }
 
-    if (mockCards.length > 0) {
-      results.value = { cards: mockCards }
-      identifiedCards.value = mockCards
+    if (allCards.length > 0) {
+      results.value = { cards: allCards }
+      identifiedCards.value = allCards.filter(c => !c.error && c.price)
+      failedCards.value = allCards.filter(c => c.error || !c.price)
       calculateTotal()
     } else {
       error.value = 'Failed to load demo cards'

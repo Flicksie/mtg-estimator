@@ -11,7 +11,7 @@
     </div>
 
     <!-- Manual Card Name Entry -->
-    <div class="field" v-if="results.num_detected > 0 && results.cards.length === 0">
+    <div class="field" v-if="results.num_detected > 0 && identifiedCards.length === 0 && failedCards.length === 0">
       <label class="label"><i class="fas fa-pen"></i> Enter Card Names (one per line)</label>
       <div class="control">
         <textarea 
@@ -34,7 +34,7 @@
 
     <!-- Identified Cards Grid -->
     <div v-if="identifiedCards.length > 0" class="mt-5">
-      <h3 class="title is-4">Identified Cards</h3>
+      <h3 class="title is-4"><i class="fas fa-check-circle" style="color: #11D8A2;"></i> Successfully Identified</h3>
       
       <div :class="styles.identifiedGrid">
         <CardItem 
@@ -49,9 +49,26 @@
       <div :class="styles.totalValueBox" class="mt-5">
         <div :class="styles.totalValueContent">
           <p :class="styles.totalLabel"><i class="fas fa-gem"></i> Total Estimated Value</p>
-          <p :class="styles.totalAmount">${{ totalValue.toFixed(2) }}</p>
+          <p :class="styles.totalAmount">{{ totalValue.toFixed(2) }}</p>
         </div>
         <div :class="styles.totalIcon"><i class="fas fa-money-bill-wave fa-3x"></i></div>
+      </div>
+    </div>
+
+    <!-- Failed Cards Section -->
+    <div v-if="failedCards.length > 0" class="mt-6">
+      <h3 class="title is-4"><i class="fas fa-exclamation-circle" style="color: #FF6B6B;"></i> Could Not Find Price ({{ failedCards.length }})</h3>
+      <div class="notification is-warning">
+        <p>These cards could not be found or had pricing issues. They are displayed below for reference:</p>
+      </div>
+      
+      <div :class="styles.failedGrid">
+        <CardItem 
+          v-for="(card, index) in failedCards" 
+          :key="index" 
+          :card="card"
+          :failed="true"
+        />
       </div>
     </div>
   </div>
@@ -66,6 +83,7 @@ import styles from './CardResults.module.scss'
 interface Props {
   results: ScanResult | null
   identifiedCards: Card[]
+  failedCards: Card[]
   totalValue: number
   identifying?: boolean
   manualCardNames?: string

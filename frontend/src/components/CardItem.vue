@@ -1,33 +1,39 @@
 <template>
-  <div :class="styles.scannerCard" class="card">
-    <!-- Card Image -->
-    <div :class="styles.cardImage" v-if="props.card.image_uri">
-      <img :src="props.card.image_uri" :alt="props.card.name">
-    </div>
-
-    <!-- Card Info -->
-    <div :class="styles.cardContent">
-      <p class="title is-6" :class="styles.cardName">{{ props.card.name }}</p>
-      <p class="subtitle is-7" v-if="props.card.set">{{ props.card.set }}</p>
-      
-      <div :class="styles.cardPrice" v-if="props.card.price">
-        <p :class="styles.priceLabel"><i class="fas fa-dollar-sign"></i></p>
-        <p :class="styles.priceValue">${{ props.card.price.toFixed(2) }}</p>
+  <div :class="styles.scannerCard" class="card" v-if="props.card.image_uri || props.failed">
+    <!-- Card Image as Background (if available) -->
+    <img v-if="props.card.image_uri" :src="props.card.image_uri" :alt="props.card.name" :class="styles.cardImageBg">
+    
+    <!-- Placeholder for failed cards without image -->
+    <div v-else :class="styles.cardImageBg">
+      <div :class="styles.imagePlaceholder">
+        <i class="fas fa-image" style="font-size: 2rem;"></i>
       </div>
-      
-      <p class="has-text-danger" v-else-if="'found' in props.card && !props.card.found">
-        Card not found
-      </p>
-      
-      <button 
-        @click="addCard"
-        class="button is-success is-fullwidth mt-3"
-        v-if="'found' in props.card ? props.card.found !== false : true">
-        <span class="icon">
-          <i class="fas fa-plus-circle"></i>
-        </span>
-        <span>Add to Collection</span>
-      </button>
+    </div>
+    
+    <!-- Button (Add or Failed Indicator) -->
+    <button 
+      @click="addCard"
+      :class="[styles.cornerButton, props.failed ? styles.failedButton : styles.addButton]"
+      :title="props.failed ? 'Price not found' : 'Add to Collection'">
+      <i :class="props.failed ? 'fas fa-times' : 'fas fa-plus'"></i>
+    </button>
+    
+    <!-- Overlay Content (Bottom) -->
+    <div :class="styles.cardOverlay">
+      <!-- Card Info with Gradient Background -->
+      <div :class="styles.cardContent">
+        <p class="subtitle is-7" v-if="props.card.set" :class="styles.cardSet">{{ props.card.set }}</p>
+        <p class="title is-6" :class="styles.cardName">{{ props.card.name }}</p>
+        
+        <div :class="styles.cardPrice" v-if="props.card.price && !props.failed">
+          <p :class="styles.priceLabel"><i class="fas fa-dollar-sign"></i></p>
+          <p :class="styles.priceValue">{{ props.card.price.toFixed(2) }}</p>
+        </div>
+        
+        <p class="has-text-danger" v-else-if="props.failed">
+          Price not found
+        </p>
+      </div>
     </div>
   </div>
 </template>
@@ -40,13 +46,16 @@ import styles from './CardItem.module.scss'
 
 interface Props {
   card: Card
+  failed?: boolean
 }
 
 interface Emits {
   (e: 'card-added'): void
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  failed: false
+})
 const emit = defineEmits<Emits>()
 
 const { addAnimation, incrementCount } = useCollection()
