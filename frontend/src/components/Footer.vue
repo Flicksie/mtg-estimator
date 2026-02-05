@@ -1,9 +1,12 @@
 <template>
-  <footer class="footer has-background-dark has-text-white-ter">
+  <footer class="footer">
     <div class="content has-text-centered">
-      <p class="has-text-white-ter">
-        <strong class="has-text-white">MTG Card Estimator</strong> &copy; {{ currentYear }} | 
-        Data provided by <a href="https://scryfall.com" target="_blank" class="has-text-link">Scryfall</a>
+      <p>
+        <strong>✨ MTG Card Estimator ✨</strong> &copy; {{ currentYear }} | 
+        Data provided by <a href="https://scryfall.com" target="_blank">Scryfall</a>
+      </p>
+      <p class="is-size-7 has-text-grey-light">
+        Made with 💜 for card collectors everywhere
       </p>
     </div>
   </footer>
@@ -14,3 +17,16 @@ import { computed } from 'vue'
 
 const currentYear = computed(() => new Date().getFullYear())
 </script>
+
+<style scoped>
+a {
+    color: #FF6B9D;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+a:hover {
+    color: #FFB3D9;
+    text-decoration: underline;
+}
+</style>
