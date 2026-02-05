@@ -75,6 +75,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import Swal from 'sweetalert2'
 import CollectionCardItem from '../components/CollectionCardItem.vue'
 import api from '../services/api'
 import type { Card } from '../types'
@@ -96,28 +97,72 @@ const loadCollection = async () => {
 }
 
 const removeCard = async (cardId: number) => {
-  if (!confirm('Remove this card from your collection?')) {
-    return
-  }
+  const result = await Swal.fire({
+    title: 'Remove Card?',
+    text: 'This card will be removed from your collection',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#FF6B9D',
+    cancelButtonColor: '#6c757d',
+    confirmButtonText: 'Remove',
+    cancelButtonText: 'Cancel'
+  })
+
+  if (!result.isConfirmed) return
 
   try {
     await api.removeFromCollection(cardId)
     collection.value = collection.value.filter(c => c.id !== cardId)
+    
+    await Swal.fire({
+      title: 'Removed!',
+      text: 'Card removed from collection',
+      icon: 'success',
+      timer: 1500,
+      timerProgressBar: true
+    })
   } catch (err) {
-    alert('Error removing card: ' + (err instanceof Error ? err.message : 'Unknown error'))
+    await Swal.fire({
+      title: 'Error',
+      text: 'Error removing card: ' + (err instanceof Error ? err.message : 'Unknown error'),
+      icon: 'error',
+      confirmButtonColor: '#FF6B9D'
+    })
   }
 }
 
 const clearCollection = async () => {
-  if (!confirm('Are you sure? This will clear your entire collection!')) {
-    return
-  }
+  const result = await Swal.fire({
+    title: 'Clear Collection?',
+    text: 'This will remove all cards from your collection. This cannot be undone!',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#FF6B6B',
+    cancelButtonColor: '#6c757d',
+    confirmButtonText: 'Clear All',
+    cancelButtonText: 'Cancel'
+  })
+
+  if (!result.isConfirmed) return
 
   try {
     await api.clearCollection()
     collection.value = []
+    
+    await Swal.fire({
+      title: 'Cleared!',
+      text: 'Your collection has been cleared',
+      icon: 'success',
+      timer: 1500,
+      timerProgressBar: true
+    })
   } catch (err) {
-    alert('Error clearing collection: ' + (err instanceof Error ? err.message : 'Unknown error'))
+    await Swal.fire({
+      title: 'Error',
+      text: 'Error clearing collection: ' + (err instanceof Error ? err.message : 'Unknown error'),
+      icon: 'error',
+      confirmButtonColor: '#FF6B9D'
+    })
   }
 }
 
@@ -134,8 +179,21 @@ const exportCollection = async () => {
     link.click()
     
     URL.revokeObjectURL(url)
+    
+    await Swal.fire({
+      title: 'Exported!',
+      text: 'Your collection has been exported',
+      icon: 'success',
+      timer: 1500,
+      timerProgressBar: true
+    })
   } catch (err) {
-    alert('Error exporting collection: ' + (err instanceof Error ? err.message : 'Unknown error'))
+    await Swal.fire({
+      title: 'Error',
+      text: 'Error exporting collection: ' + (err instanceof Error ? err.message : 'Unknown error'),
+      icon: 'error',
+      confirmButtonColor: '#FF6B9D'
+    })
   }
 }
 

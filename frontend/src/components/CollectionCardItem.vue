@@ -39,6 +39,7 @@
 </template>
 
 <script setup lang="ts">
+import Swal from 'sweetalert2'
 import type { Card } from '../types'
 import styles from './CollectionCardItem.module.scss'
 
@@ -54,9 +55,21 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-const handleRemove = () => {
+const handleRemove = async () => {
   if (!props.card.id) return
-  if (confirm('Remove this card from your collection?')) {
+  
+  const result = await Swal.fire({
+    title: 'Remove Card?',
+    text: 'This card will be removed from your collection',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#FF6B9D',
+    cancelButtonColor: '#6c757d',
+    confirmButtonText: 'Remove',
+    cancelButtonText: 'Cancel'
+  })
+
+  if (result.isConfirmed) {
     emit('remove', props.card.id)
   }
 }

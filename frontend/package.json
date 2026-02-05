@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "bulma": "^0.9.4",
+    "sweetalert2": "^11.26.18",
     "vue": "^3.4.0",
     "vue-router": "^4.2.0"
   },
