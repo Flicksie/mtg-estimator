@@ -65,14 +65,14 @@
             <div class="property" v-if="card.mana_cost">
               <span class="property-label">Mana Cost:</span>
               <div class="mana-cost-display">
-                <span 
+                <img 
                   v-for="(mana, index) in formattedManaCost" 
                   :key="index"
+                  :src="mana.iconUrl"
+                  :alt="mana.text"
                   class="mana-icon"
-                  :style="{ backgroundColor: mana.color }"
-                >
-                  {{ mana.text }}
-                </span>
+                  loading="lazy"
+                />
               </div>
             </div>
             <div class="property" v-if="card.type_line">
@@ -303,21 +303,19 @@ const addToCollection = async () => {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .mana-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  font-weight: 800;
-  font-size: 0.9rem;
-  color: white;
-  border: 2px solid #333;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  width: 1.5rem;
+  height: 1.5rem;
+  display: inline-block;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  transition: transform 0.2s ease;
+}
+
+.mana-icon:hover {
+  transform: scale(1.15);
 }
 
 .oracle-box {
