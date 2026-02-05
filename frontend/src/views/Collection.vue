@@ -61,19 +61,17 @@
     </div>
 
     <!-- Collection Grid -->
-    <div v-else class="columns is-multiline collection-grid">
+    <div v-else class="collection-grid">
       <div 
         v-for="(card, index) in collection" 
         :key="card.id" 
-        class="column is-one-quarter-desktop is-one-third-tablet is-full-mobile"
+        class="collection-card-wrapper"
         :style="{ 'animation-delay': `${index * 0.05}s` }"
       >
         <div class="card collection-card">
           <!-- Card Image -->
           <div class="card-image" v-if="card.image_uri">
-            <figure class="image is-4by3">
-              <img :src="card.image_uri" :alt="card.name" class="collection-card-img">
-            </figure>
+            <img :src="card.image_uri" :alt="card.name" class="collection-card-img">
             <div class="card-rarity-badge"><i class="fas fa-star"></i></div>
           </div>
 

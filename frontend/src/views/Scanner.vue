@@ -49,6 +49,15 @@
           <span>Use Camera</span>
         </button>
         <span class="mx-2 has-text-grey">or</span>
+        <button 
+          @click="loadDemoCards" 
+          class="button is-warning is-medium"
+          :disabled="uploading">
+          <span class="icon">
+            <i class="fas fa-wand-magic-sparkles"></i>
+          </span>
+          <span>Demo Cards</span>
+        </button>
       </div>
 
       <!-- Camera Modal -->
@@ -122,95 +131,17 @@
         <p><strong>Error:</strong> {{ error }}</p>
       </div>
 
-      <!-- Scan Results -->
-      <div v-if="results" class="mt-6 results-section">
-        <div class="results-header">
-          <h2 class="title is-4"><i class="fas fa-bullseye"></i> Scan Results</h2>
-          <p class="subtitle is-6">Detected <strong>{{ results.num_detected }}</strong> card(s)</p>
-        </div>
-
-        <!-- Warning Message -->
-        <div v-if="results.message" class="notification is-warning">
-          <p>{{ results.message }}</p>
-        </div>
-
-        <!-- Manual Card Name Entry -->
-        <div class="field" v-if="results.num_detected > 0 && results.cards.length === 0">
-          <label class="label"><i class="fas fa-pen"></i> Enter Card Names (one per line)</label>
-          <div class="control">
-            <textarea 
-              v-model="manualCardNames"
-              class="textarea" 
-              placeholder="Lightning Bolt&#10;Counterspell&#10;Dark Ritual"
-              rows="5"></textarea>
-          </div>
-          <button 
-            @click="identifyCards"
-            :class="['button', 'is-primary', 'is-fullwidth', 'mt-3', { 'is-loading': identifying }]"
-            :disabled="!manualCardNames || identifying">
-            <span class="icon">
-              <i class="fas fa-magnifying-glass"></i>
-            </span>
-            <span>{{ identifying ? 'Identifying...' : 'Identify Cards' }}</span>
-          </button>
-        </div>
-
-        <!-- Identified Cards Grid -->
-        <div v-if="identifiedCards.length > 0" class="mt-5">
-          <h3 class="title is-4">Identified Cards</h3>
-          
-          <div class="columns is-multiline identified-grid">
-            <div 
-              v-for="(card, index) in identifiedCards" 
-              :key="index" 
-              class="column is-one-third-desktop is-half-tablet is-full-mobile"
-            >
-              <div class="card scanner-card">
-                <!-- Card Image -->
-                <div class="card-image" v-if="card.image_uri">
-                  <figure class="image is-4by3">
-                    <img :src="card.image_uri" :alt="card.name" class="scanner-card-img">
-                  </figure>
-                </div>
-
-                <!-- Card Info -->
-                <div class="card-content">
-                  <p class="title is-6 card-name">{{ card.name }}</p>
-                  <p class="subtitle is-7" v-if="card.set">{{ card.set }}</p>
-                  
-                  <div class="card-price" v-if="card.price">
-                    <p class="price-label"><i class="fas fa-dollar-sign"></i></p>
-                    <p class="price-value">${{ card.price.toFixed(2) }}</p>
-                  </div>
-                  
-                  <p class="has-text-danger" v-else-if="'found' in card && !card.found">
-                    Card not found
-                  </p>
-                  
-                  <button 
-                    @click="addToCollection(card, $event)"
-                    class="button is-success is-fullwidth mt-3"
-                    v-if="'found' in card ? card.found !== false : true">
-                    <span class="icon">
-                      <i class="fas fa-plus-circle"></i>
-                    </span>
-                    <span>Add to Collection</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Total Value Summary -->
-          <div class="total-value-box mt-5">
-            <div class="total-value-content">
-              <p class="total-label"><i class="fas fa-gem"></i> Total Estimated Value</p>
-              <p class="total-amount">${{ totalValue.toFixed(2) }}</p>
-            </div>
-            <div class="total-icon"><i class="fas fa-money-bill-wave fa-3x"></i></div>
-          </div>
-        </div>
-      </div>
+      <!-- Card Results Component -->
+      <CardResults 
+        :results="results"
+        :identified-cards="identifiedCards"
+        :total-value="totalValue"
+        :identifying="identifying"
+        :manual-card-names="manualCardNames"
+        @update-manual-cards="(value) => manualCardNames = value"
+        @identify-cards="identifyCards"
+        @card-added="handleCardAdded"
+      />
     </div>
   </div>
 </template>
@@ -218,6 +149,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import api from '../services/api'
+import CardResults from '../components/CardResults.vue'
 import type { Card, ScanResult } from '../types'
 import { useCollection } from '../composables/useCollection'
 
@@ -423,12 +355,64 @@ const addToCollection = async (card: Card, event: Event) => {
   }
 }
 
+const handleIdentifyCards = () => {
+  // This is called from CardResults component when cards are identified
+  // The component handles the identification directly
+}
+
+const handleCardAdded = () => {
+  // This is called from CardResults component when a card is added
+  // The component handles the addition directly
+}
+
 const checkOcrStatus = async () => {
   try {
     const stats = await api.getStats()
     ocrAvailable.value = stats.ocr_available
   } catch (error) {
     console.error('Failed to load OCR status:', error)
+  }
+}
+
+const loadDemoCards = async () => {
+  uploading.value = true
+  error.value = ''
+  results.value = null
+  identifiedCards.value = []
+
+  try {
+    // Demo card names to fetch
+    const demoCardNames = ['Lightning Bolt', 'Black Lotus', 'Shock', 'Counterspell', 'Snapcaster Mage']
+    const mockCards = []
+
+    // Fetch real card data from API for each demo card
+    for (const cardName of demoCardNames) {
+      try {
+        const searchResult = await api.searchCard(cardName)
+        if (searchResult) {
+          mockCards.push({
+            name: searchResult.name,
+            set: searchResult.set,
+            price: searchResult.prices.usd || 0,
+            image_uri: searchResult.image_uri || ''
+          })
+        }
+      } catch (err) {
+        console.warn(`Failed to fetch ${cardName}:`, err)
+      }
+    }
+
+    if (mockCards.length > 0) {
+      results.value = { cards: mockCards }
+      identifiedCards.value = mockCards
+      calculateTotal()
+    } else {
+      error.value = 'Failed to load demo cards'
+    }
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Failed to load demo cards'
+  } finally {
+    uploading.value = false
   }
 }
 </script>

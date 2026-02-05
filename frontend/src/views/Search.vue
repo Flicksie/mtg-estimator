@@ -33,7 +33,7 @@
 
       <div v-if="card" class="columns mt-5">
         <!-- Card Image Column -->
-        <div class="column is-one-third">
+        <div class="column is-one-third-desktop is-half-tablet is-full-mobile">
           <figure class="image card-image-container">
             <img 
               v-if="card.image_uri" 
@@ -51,10 +51,10 @@
         </div>
 
         <!-- Card Details Column -->
-        <div class="column card-details">
+        <div class="column is-two-thirds-desktop is-half-tablet is-full-mobile card-details">
           <div class="card-header-info">
-            <h2 class="title is-2">{{ card.name }}</h2>
-            <p class="subtitle is-4">
+            <h2 class="title is-3-mobile is-2-tablet is-1-desktop">{{ card.name }}</h2>
+            <p class="subtitle is-5-mobile is-4-tablet is-4-desktop">
               <span class="set-badge">{{ card.set }}</span>
               <span class="set-code">({{ card.set_code }})</span>
             </p>

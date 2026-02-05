@@ -1,0 +1,436 @@
+// ✨ DESIGN TOKENS ✨
+$primary-gradient: linear-gradient(135deg, #FF6B9D 0%, #C06BFF 50%, #5B61FF 100%);
+$secondary-gradient: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+$success-gradient: linear-gradient(135deg, #11D8A2 0%, #00D4FF 100%);
+$warning-gradient: linear-gradient(135deg, #FFB347 0%, #FF8C47 100%);
+$danger-gradient: linear-gradient(135deg, #FF6B6B 0%, #EE5A6F 100%);
+$rarity-gold: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+$rarity-purple: linear-gradient(135deg, #9D4EDD 0%, #5A189A 100%);
+$rarity-cyan: linear-gradient(135deg, #00D9FF 0%, #0096D9 100%);
+
+$radius-sm: 12px;
+$radius-md: 20px;
+$radius-lg: 32px;
+
+$shadow-sm: 0 4px 12px rgba(255, 107, 157, 0.15);
+$shadow-md: 0 8px 24px rgba(102, 126, 234, 0.2);
+$shadow-lg: 0 12px 40px rgba(102, 126, 234, 0.3);
+
+// ✨ MIXINS ✨
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+@mixin smooth-transition {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@mixin card-base {
+  border-radius: $radius-md;
+  border: none;
+  box-shadow: $shadow-md;
+  @include smooth-transition;
+  background: white;
+  overflow: hidden;
+  position: relative;
+}
+
+@mixin card-hover {
+  transform: translateY(-12px) scale(1.02);
+  box-shadow: $shadow-lg;
+  
+  &::before {
+    opacity: 1;
+  }
+}
+
+@mixin top-accent {
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: $primary-gradient;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+}
+
+@mixin button-ripple {
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+  }
+  
+  &:hover::before {
+    width: 300px;
+    height: 300px;
+  }
+}
+
+// ✨ GLOBAL STYLES ✨
+:root {
+  --primary-gradient: #{$primary-gradient};
+  --secondary-gradient: #{$secondary-gradient};
+  --success-gradient: #{$success-gradient};
+  --warning-gradient: #{$warning-gradient};
+  --rarity-gold: #{$rarity-gold};
+  --rarity-purple: #{$rarity-purple};
+  --rarity-cyan: #{$rarity-cyan};
+  
+  --border-radius-sm: #{$radius-sm};
+  --border-radius-md: #{$radius-md};
+  --border-radius-lg: #{$radius-lg};
+  --shadow-sm: #{$shadow-sm};
+  --shadow-md: #{$shadow-md};
+  --shadow-lg: #{$shadow-lg};
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  @include flex-column;
+  background: linear-gradient(180deg, #F8F7FF 0%, #EFE9FF 50%, #E8DFFF 100%);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+#app {
+  flex: 1;
+  @include flex-column;
+}
+
+.main-content {
+  flex: 1;
+  padding: 2rem 1rem;
+}
+
+// ✨ NAVBAR ✨
+.navbar {
+  background: linear-gradient(135deg, #1a1a3e 0%, #2d1b4e 50%, #1b3a52 100%) !important;
+  box-shadow: $shadow-lg;
+  border-radius: 0 0 $radius-lg $radius-lg;
+  backdrop-filter: blur(10px);
+  
+  &-item {
+    color: white !important;
+    background: transparent !important;
+    font-weight: 600;
+    @include smooth-transition;
+    padding: 0.875rem 1.5rem;
+    border-radius: $radius-sm;
+    margin: 0.25rem;
+    
+    &:hover {
+      transform: translateY(-2px);
+    }
+  }
+}
+
+// ✨ HERO ✨
+.hero {
+  border-radius: $radius-lg;
+  margin: 1.5rem;
+  overflow: hidden;
+  position: relative;
+  background: $primary-gradient !important;
+  box-shadow: $shadow-lg;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  
+  &-body {
+    position: relative;
+    z-index: 1;
+    color: white;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .title,
+  .subtitle {
+    color: white;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  
+  .subtitle {
+    font-size: 1.25rem;
+    opacity: 0.95;
+  }
+}
+
+// ✨ CARDS ✨
+.card {
+  @include card-base;
+  @include top-accent;
+  
+  &:hover {
+    @include card-hover;
+  }
+}
+
+// ✨ NOTIFICATIONS ✨
+.notification {
+  border-radius: $radius-md;
+  border: none;
+  box-shadow: $shadow-sm;
+  position: relative;
+  overflow: hidden;
+  color: white;
+  font-weight: 600;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  
+  &.is-primary {
+    background: $primary-gradient;
+  }
+  
+  &.is-success {
+    background: $success-gradient;
+  }
+  
+  &.is-warning {
+    background: $warning-gradient;
+  }
+  
+  &.is-info {
+    background: $secondary-gradient;
+  }
+  
+  &.is-danger {
+    background: $danger-gradient;
+  }
+  
+  .title,
+  .heading,
+  .subtitle {
+    color: white;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+}
+
+// ✨ BUTTONS ✨
+.button {
+  border-radius: $radius-sm;
+  border: none;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  @include smooth-transition;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  padding: 0.75rem 1.5rem;
+  position: relative;
+  overflow: hidden;
+  @include button-ripple;
+  
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  
+  &.is-loading::after {
+    border-color: transparent transparent white white;
+  }
+  
+  &.is-primary {
+    background: $primary-gradient;
+    color: white;
+  }
+  
+  &.is-success {
+    background: $success-gradient;
+    color: white;
+  }
+  
+  &.is-info {
+    background: $secondary-gradient;
+    color: white;
+  }
+  
+  &.is-warning {
+    background: $warning-gradient;
+    color: white;
+  }
+  
+  &.is-danger {
+    background: $danger-gradient;
+    color: white;
+  }
+}
+
+// ✨ INPUTS ✨
+.input,
+.textarea,
+.select select {
+  border-radius: $radius-sm;
+  border: 2px solid #E0E0E0;
+  @include smooth-transition;
+  font-size: 1rem;
+  padding: 0.75rem 1rem;
+  
+  &:focus {
+    border-color: #FF6B9D;
+    box-shadow: 0 0 0 3px rgba(255, 107, 157, 0.1);
+    outline: none;
+  }
+  
+  &::placeholder {
+    color: #B0B0B0;
+  }
+}
+
+// ✨ TABLES ✨
+.table {
+  background-color: white;
+  border-radius: $radius-md;
+  overflow: hidden;
+  box-shadow: $shadow-sm;
+  
+  td,
+  th {
+    border-color: #F0F0F0;
+    padding: 1rem;
+  }
+  
+  th {
+    background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+    color: white;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+  }
+  
+  tr:hover {
+    background-color: #F9F7FF;
+  }
+}
+
+// ✨ FOOTER ✨
+.footer {
+  margin-top: auto;
+  background: linear-gradient(180deg, #2C2C7C 0%, #1A1A4C 100%);
+  color: white;
+  border-top: 3px solid $primary-gradient;
+  padding: 2rem 1rem;
+  text-align: center;
+  
+  a {
+    color: #FF6B9D;
+    @include smooth-transition;
+    
+    &:hover {
+      color: #FFB3D9;
+      text-decoration: underline;
+    }
+  }
+}
+
+// ✨ FILE UPLOAD ✨
+.file.is-boxed .file-label {
+  @include flex-column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  border-radius: $radius-md;
+  border: 2px dashed #FF6B9D;
+  background: rgba(255, 107, 157, 0.05);
+  @include smooth-transition;
+  padding: 2rem;
+  cursor: pointer;
+  
+  &:hover {
+    background: rgba(255, 107, 157, 0.1);
+    border-color: #C06BFF;
+    transform: translateY(-2px);
+  }
+}
+
+.file.is-fullwidth .file-name {
+  flex-grow: 1;
+  max-width: none;
+  background: white;
+  border-radius: $radius-sm;
+}
+
+// ✨ ANIMATIONS ✨
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(255, 107, 157, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 15px rgba(255, 107, 157, 0);
+  }
+}
+
+.collection-icon.animating {
+  animation: pulse-glow 0.6s ease-out;
+}
+
+.is-loading {
+  pointer-events: none;
+}
+
+// ✨ RESPONSIVE ✨
+@media screen and (max-width: 768px) {
+  .hero {
+    margin: 0.5rem;
+    border-radius: $radius-md;
+  }
+  
+  .navbar-item {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+  
+  .button {
+    width: 100%;
+  }
+}
+
+// ✨ INTERACTIVE ELEMENTS ✨
+button, .button, a, input, textarea, select {
+  @include smooth-transition;
+}
