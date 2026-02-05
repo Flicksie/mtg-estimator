@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1 class="title">🔎 Card Search</h1>
+    <h1 class="title"><i class="fas fa-search"></i> Card Search</h1>
     <p class="subtitle">Find any Magic: The Gathering card and add it to your collection</p>
 
     <div class="box search-container">
@@ -92,7 +92,7 @@
             </div>
           </div>
           <div class="notification is-warning" v-else>
-            <p>💔 Price information not available for this card</p>
+            <p>Price information not available for this card</p>
           </div>
 
           <!-- Action Buttons -->
@@ -116,7 +116,7 @@
 
           <div v-if="addedMessage" class="notification is-success mt-4">
             <button @click="addedMessage = ''" class="delete"></button>
-            <p><strong>✨ Success!</strong> {{ addedMessage }}</p>
+            <p><strong>Success!</strong> {{ addedMessage }}</p>
           </div>
         </div>
       </div>

@@ -77,7 +77,7 @@ class MTGEstimatorApp
     method = request.request_method
 
     case [method, path]
-    when ['GET', '/api/stats']
+    when ['GET', '/api/statsa']
       api_stats(env)
     when ['GET', '/api/collection/list']
       api_collection_list(env)

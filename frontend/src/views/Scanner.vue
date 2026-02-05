@@ -1,13 +1,13 @@
 <template>
   <div>
-    <h1 class="title">📸 Smart Card Scanner</h1>
+    <h1 class="title"><i class="fas fa-camera"></i> Smart Card Scanner</h1>
     <p class="subtitle">Upload card images for AI-powered automatic identification</p>
 
     <!-- OCR Status Banner -->
     <div class="notification scanner-status" :class="ocrAvailable ? 'is-success' : 'is-warning'">
       <p v-if="ocrAvailable">
         <span class="icon"><i class="fas fa-check-circle"></i></span>
-        <strong>✨ AI Scanner Active!</strong> Upload images and we'll identify your cards automatically
+        <strong>AI Scanner Active!</strong> Upload images and we'll identify your cards automatically
       </p>
       <p v-else>
         <span class="icon"><i class="fas fa-exclamation-circle"></i></span>
@@ -20,7 +20,7 @@
       <div class="field">
         <label class="label">
           <span class="icon-text">
-            <span class="icon">🔑</span>
+            <span class="icon"><i class="fas fa-key"></i></span>
             <span>Gemini API Key (Optional)</span>
           </span>
         </label>
@@ -55,7 +55,7 @@
             </span>
           </span>
           <span class="file-name" v-if="selectedFile">
-            ✓ {{ selectedFile.name }}
+            <i class="fas fa-check"></i> {{ selectedFile.name }}
           </span>
         </label>
       </div>
@@ -81,13 +81,13 @@
       <!-- Error Notification -->
       <div v-if="error" class="notification is-danger mt-4">
         <button @click="error = ''" class="delete"></button>
-        <p><strong>⚠️ Error:</strong> {{ error }}</p>
+        <p><strong>Error:</strong> {{ error }}</p>
       </div>
 
       <!-- Scan Results -->
       <div v-if="results" class="mt-6 results-section">
         <div class="results-header">
-          <h2 class="title is-4">🎯 Scan Results</h2>
+          <h2 class="title is-4"><i class="fas fa-bullseye"></i> Scan Results</h2>
           <p class="subtitle is-6">Detected <strong>{{ results.num_detected }}</strong> card(s)</p>
         </div>
 
@@ -98,7 +98,7 @@
 
         <!-- Manual Card Name Entry -->
         <div class="field" v-if="results.num_detected > 0 && results.cards.length === 0">
-          <label class="label">📝 Enter Card Names (one per line)</label>
+          <label class="label"><i class="fas fa-pen"></i> Enter Card Names (one per line)</label>
           <div class="control">
             <textarea 
               v-model="manualCardNames"
@@ -119,7 +119,7 @@
 
         <!-- Identified Cards Grid -->
         <div v-if="identifiedCards.length > 0" class="mt-5">
-          <h3 class="title is-4">✨ Identified Cards</h3>
+          <h3 class="title is-4">Identified Cards</h3>
           
           <div class="columns is-multiline identified-grid">
             <div 
@@ -141,7 +141,7 @@
                   <p class="subtitle is-7" v-if="card.set">{{ card.set }}</p>
                   
                   <div class="card-price" v-if="card.price">
-                    <p class="price-label">💰</p>
+                    <p class="price-label"><i class="fas fa-dollar-sign"></i></p>
                     <p class="price-value">${{ card.price.toFixed(2) }}</p>
                   </div>
                   
@@ -166,10 +166,10 @@
           <!-- Total Value Summary -->
           <div class="total-value-box mt-5">
             <div class="total-value-content">
-              <p class="total-label">💎 Total Estimated Value</p>
+              <p class="total-label"><i class="fas fa-gem"></i> Total Estimated Value</p>
               <p class="total-amount">${{ totalValue.toFixed(2) }}</p>
             </div>
-            <div class="total-icon">💰</div>
+            <div class="total-icon"><i class="fas fa-money-bill-wave fa-3x"></i></div>
           </div>
         </div>
       </div>

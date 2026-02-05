@@ -2,11 +2,11 @@
   <footer class="footer">
     <div class="content has-text-centered">
       <p>
-        <strong>✨ MTG Card Estimator ✨</strong> &copy; {{ currentYear }} | 
+        <strong>MTG Card Estimator</strong> &copy; {{ currentYear }} | 
         Data provided by <a href="https://scryfall.com" target="_blank">Scryfall</a>
       </p>
       <p class="is-size-7 has-text-grey-light">
-        Made with 💜 for card collectors everywhere
+        Made with <i class="fas fa-heart"></i> for card collectors everywhere
       </p>
     </div>
   </footer>

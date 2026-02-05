@@ -4,7 +4,7 @@
     <section class="hero">
       <div class="hero-body">
         <p class="title">
-          ✨ Welcome to MTG Estimator ✨
+          Welcome to MTG Estimator
         </p>
         <p class="subtitle">
           Discover, scan, and value your Magic: The Gathering collection with AI-powered precision
@@ -16,7 +16,7 @@
     <div class="columns mt-5">
       <div class="column floating" style="animation-delay: 0s">
         <div class="notification is-primary stats-card">
-          <p class="heading">📚 Your Collection</p>
+          <p class="heading"><i class="fas fa-book"></i> Your Collection</p>
           <p class="title stat-number">{{ stats.total_cards }}</p>
           <p class="subtitle">Total Cards</p>
         </div>
@@ -24,7 +24,7 @@
       
       <div class="column floating" style="animation-delay: 0.2s">
         <div class="notification is-success stats-card">
-          <p class="heading">💰 Total Value</p>
+          <p class="heading"><i class="fas fa-dollar-sign"></i> Total Value</p>
           <p class="title stat-number">${{ stats.total_value.toFixed(2) }}</p>
           <p class="subtitle">Estimated USD</p>
         </div>
@@ -32,7 +32,7 @@
       
       <div class="column floating" style="animation-delay: 0.4s">
         <div class="notification" :class="stats.ocr_available ? 'is-success' : 'is-warning'" style="height: 100%">
-          <p class="heading">🔍 Scanner Status</p>
+          <p class="heading"><i class="fas fa-scanner"></i> Scanner Status</p>
           <p class="title" style="margin: 1rem 0;">
             <span class="icon is-large">
               <i class="fas" :class="stats.ocr_available ? 'fa-check-circle' : 'fa-exclamation-circle'" style="font-size: 2.5rem;"></i>
@@ -51,7 +51,7 @@
       <div class="column">
         <div class="card feature-card search-card">
           <div class="card-content has-text-centered">
-            <span class="feature-icon search-icon">🔎</span>
+            <img src="https://img.icons8.com/fluency/96/search.png" alt="search" class="feature-icon search-icon" />
             <h3 class="title is-4 mt-4">Card Search</h3>
             <p class="has-text-grey-dark">Find any Magic card and get instant pricing from our database</p>
             <router-link to="/search" class="button is-primary mt-4">
@@ -65,7 +65,7 @@
       <div class="column">
         <div class="card feature-card scanner-card">
           <div class="card-content has-text-centered">
-            <span class="feature-icon scanner-icon">📸</span>
+            <img src="https://img.icons8.com/fluency/96/camera.png" alt="scanner" class="feature-icon scanner-icon" />
             <h3 class="title is-4 mt-4">Smart Scanner</h3>
             <p class="has-text-grey-dark">Upload images and our AI identifies cards automatically</p>
             <router-link to="/scanner" class="button is-success mt-4">
@@ -79,7 +79,7 @@
       <div class="column">
         <div class="card feature-card collection-card">
           <div class="card-content has-text-centered">
-            <span class="feature-icon collection-icon">📖</span>
+            <img src="https://img.icons8.com/fluency/96/book.png" alt="collection" class="feature-icon collection-icon" />
             <h3 class="title is-4 mt-4">My Collection</h3>
             <p class="has-text-grey-dark">Track, manage, and export your entire card collection</p>
             <router-link to="/collection" class="button is-info mt-4">
@@ -93,12 +93,12 @@
 
     <!-- How It Works -->
     <div class="box mt-6 how-it-works-box">
-      <h3 class="title is-3">✨ How It Works</h3>
+      <h3 class="title is-3">How It Works</h3>
       
       <div class="columns is-multiline mt-5">
         <div class="column is-one-quarter-desktop is-half-tablet">
           <div class="tutorial-step">
-            <div class="step-number">1️⃣</div>
+            <div class="step-number">1</div>
             <h4 class="title is-5">Upload or Search</h4>
             <p class="is-size-7">Use Scanner to upload card images, or Search by name</p>
           </div>
@@ -106,7 +106,7 @@
 
         <div class="column is-one-quarter-desktop is-half-tablet">
           <div class="tutorial-step">
-            <div class="step-number">2️⃣</div>
+            <div class="step-number">2</div>
             <h4 class="title is-5">Auto Recognition</h4>
             <p class="is-size-7">AI analyzes images and extracts card information</p>
           </div>
@@ -114,7 +114,7 @@
 
         <div class="column is-one-quarter-desktop is-half-tablet">
           <div class="tutorial-step">
-            <div class="step-number">3️⃣</div>
+            <div class="step-number">3</div>
             <h4 class="title is-5">Get Live Pricing</h4>
             <p class="is-size-7">Fetch current market prices from Scryfall</p>
           </div>
@@ -122,7 +122,7 @@
 
         <div class="column is-one-quarter-desktop is-half-tablet">
           <div class="tutorial-step">
-            <div class="step-number">4️⃣</div>
+            <div class="step-number">4</div>
             <h4 class="title is-5">Manage & Export</h4>
             <p class="is-size-7">Track collection value and export your data</p>
           </div>
@@ -230,7 +230,8 @@ onMounted(() => {
 
 .feature-icon {
   display: block;
-  font-size: 4rem;
+  width: 96px;
+  height: 96px;
   margin: 0 auto;
   animation: float 3s ease-in-out infinite;
 }

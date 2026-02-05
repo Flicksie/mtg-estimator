@@ -1,12 +1,12 @@
 <template>
   <div>
-    <h1 class="title">📖 My Collection</h1>
+    <h1 class="title"><i class="fas fa-book"></i> My Collection</h1>
     <p class="subtitle">Manage and track your Magic: The Gathering cards</p>
 
     <!-- Collection Stats -->
     <div class="collection-stats">
       <div class="stat-box stat-cards">
-        <div class="stat-icon">📚</div>
+        <div class="stat-icon"><i class="fas fa-layer-group"></i></div>
         <div class="stat-content">
           <p class="stat-label">Total Cards</p>
           <p class="stat-value">{{ collection.length }}</p>
@@ -14,7 +14,7 @@
       </div>
 
       <div class="stat-box stat-value">
-        <div class="stat-icon">💰</div>
+        <div class="stat-icon"><i class="fas fa-coins"></i></div>
         <div class="stat-content">
           <p class="stat-label">Total Value</p>
           <p class="stat-value">${{ totalValue.toFixed(2) }}</p>
@@ -48,7 +48,7 @@
     <!-- Empty State -->
     <div v-if="collection.length === 0" class="empty-state-container">
       <div class="empty-state">
-        <p class="empty-icon">✨</p>
+        <p class="empty-icon"><i class="fas fa-box-open"></i></p>
         <p class="title is-4">Your collection is empty!</p>
         <p class="subtitle">Start adding cards from the <router-link to="/search">Search</router-link> or <router-link to="/scanner">Scanner</router-link> pages.</p>
         <router-link to="/search" class="button is-primary is-large mt-4">
@@ -74,7 +74,7 @@
             <figure class="image is-4by3">
               <img :src="card.image_uri" :alt="card.name" class="collection-card-img">
             </figure>
-            <div class="card-rarity-badge">✨</div>
+            <div class="card-rarity-badge"><i class="fas fa-star"></i></div>
           </div>
 
           <!-- Card Content -->
@@ -86,7 +86,7 @@
               <p class="price-amount">${{ (card.price || 0).toFixed(2) }}</p>
             </div>
             <p class="is-size-7 date-added">
-              📅 {{ formatDate(card.added_date) }}
+              <i class="fas fa-calendar"></i> {{ formatDate(card.added_date) }}
             </p>
           </div>
 
