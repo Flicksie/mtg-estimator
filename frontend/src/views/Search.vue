@@ -64,7 +64,16 @@
           <div class="card-properties">
             <div class="property" v-if="card.mana_cost">
               <span class="property-label">Mana Cost:</span>
-              <span class="property-value">{{ card.mana_cost }}</span>
+              <div class="mana-cost-display">
+                <span 
+                  v-for="(mana, index) in formattedManaCost" 
+                  :key="index"
+                  class="mana-icon"
+                  :style="{ backgroundColor: mana.color }"
+                >
+                  {{ mana.text }}
+                </span>
+              </div>
             </div>
             <div class="property" v-if="card.type_line">
               <span class="property-label">Type:</span>
@@ -125,10 +134,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import api from '../services/api'
 import type { SearchResult } from '../types'
 import { useCollection } from '../composables/useCollection'
+import { useManaFormatter } from '../composables/useManaFormatter'
 
 const query = ref('')
 const card = ref<SearchResult | null>(null)
@@ -138,6 +148,11 @@ const addedMessage = ref('')
 const addButton = ref<HTMLButtonElement | null>(null)
 
 const { addAnimation, incrementCount } = useCollection()
+const { formatMana } = useManaFormatter()
+
+const formattedManaCost = computed(() => {
+  return card.value ? formatMana(card.value.mana_cost || '') : []
+})
 
 const searchCard = async () => {
   if (!query.value.trim()) return
@@ -282,6 +297,27 @@ const addToCollection = async () => {
 .property-value {
   color: #666688;
   font-weight: 600;
+}
+
+.mana-cost-display {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.mana-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: white;
+  border: 2px solid #333;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .oracle-box {
