@@ -23,15 +23,38 @@
 
       <div class="stat-box stat-actions">
         <div class="buttons">
-          <button 
-            @click="exportCollection" 
-            class="button is-info"
-            v-if="collection.length > 0">
-            <span class="icon">
-              <i class="fas fa-download"></i>
-            </span>
-            <span>Export</span>
-          </button>
+          <div class="dropdown is-hoverable" v-if="collection.length > 0">
+            <div class="dropdown-trigger">
+              <button 
+                class="button is-info"
+                aria-haspopup="true" 
+                aria-controls="dropdown-menu">
+                <span class="icon">
+                  <i class="fas fa-download"></i>
+                </span>
+                <span>Export</span>
+                <span class="icon is-small">
+                  <i class="fas fa-angle-down"></i>
+                </span>
+              </button>
+            </div>
+            <div id="dropdown-menu" class="dropdown-menu" role="menu">
+              <div class="dropdown-content">
+                <a @click="exportJSON" class="dropdown-item">
+                  <span class="icon"><i class="fas fa-file-json"></i></span>
+                  <span>JSON</span>
+                </a>
+                <a @click="exportMoxfield" class="dropdown-item">
+                  <span class="icon"><i class="fas fa-link"></i></span>
+                  <span>Moxfield</span>
+                </a>
+                <a @click="exportArchidekt" class="dropdown-item">
+                  <span class="icon"><i class="fas fa-link"></i></span>
+                  <span>Archidekt</span>
+                </a>
+              </div>
+            </div>
+          </div>
           <button 
             @click="clearCollection" 
             class="button is-danger" 
@@ -181,6 +204,139 @@ const exportCollection = async () => {
   }
 }
 
+const exportJSON = async () => {
+  try {
+    const data = await api.exportCollection()
+    const dataStr = JSON.stringify(data, null, 2)
+    const dataBlob = new Blob([dataStr], { type: 'application/json' })
+    
+    const url = URL.createObjectURL(dataBlob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `mtg-collection-${new Date().toISOString().split('T')[0]}.json`
+    link.click()
+    
+    URL.revokeObjectURL(url)
+    
+    await swal({
+      title: 'Exported!',
+      text: 'Your collection has been exported as JSON',
+      icon: 'success',
+      timer: 1500,
+      timerProgressBar: true
+    })
+  } catch (err) {
+    await swal({
+      title: 'Error',
+      text: 'Error exporting collection: ' + (err instanceof Error ? err.message : 'Unknown error'),
+      icon: 'error'
+    })
+  }
+}
+
+const exportMoxfield = async () => {
+  try {
+    // Moxfield uses a CSV-like format with: name, set, quantity
+    let csvContent = 'Card Name,Set Code,Quantity\n'
+    
+    const cardMap = new Map<string, { name: string; set: string; count: number }>()
+    
+    for (const card of collection.value) {
+      const key = `${card.name}|${card.set_code || card.set}`
+      const existing = cardMap.get(key)
+      
+      if (existing) {
+        existing.count += 1
+      } else {
+        cardMap.set(key, {
+          name: card.name,
+          set: card.set_code || card.set,
+          count: 1
+        })
+      }
+    }
+    
+    for (const [, card] of cardMap) {
+      csvContent += `"${card.name}","${card.set}",${card.count}\n`
+    }
+    
+    const dataBlob = new Blob([csvContent], { type: 'text/csv' })
+    const url = URL.createObjectURL(dataBlob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `mtg-collection-moxfield-${new Date().toISOString().split('T')[0]}.csv`
+    link.click()
+    
+    URL.revokeObjectURL(url)
+    
+    await swal({
+      title: 'Exported to Moxfield!',
+      html: 'Your collection has been exported as CSV.<br><br>You can import this file into Moxfield by:<br>1. Go to <a href="https://www.moxfield.com" target="_blank" rel="noopener noreferrer">moxfield.com</a><br>2. Create or edit a deck<br>3. Use the import function to upload the CSV file',
+      icon: 'success',
+      timer: 35000,
+      timerProgressBar: true
+    })
+  } catch (err) {
+    await swal({
+      title: 'Error',
+      text: 'Error exporting to Moxfield: ' + (err instanceof Error ? err.message : 'Unknown error'),
+      icon: 'error'
+    })
+  }
+}
+
+const exportArchidekt = async () => {
+  try {
+    // Archidekt uses a newline-separated format: card_name set_code
+    let listContent = ''
+    
+    const cardMap = new Map<string, { name: string; set: string; count: number }>()
+    
+    for (const card of collection.value) {
+      const key = `${card.name}|${card.set_code || card.set}`
+      const existing = cardMap.get(key)
+      
+      if (existing) {
+        existing.count += 1
+      } else {
+        cardMap.set(key, {
+          name: card.name,
+          set: card.set_code || card.set,
+          count: 1
+        })
+      }
+    }
+    
+    for (const [, card] of cardMap) {
+      // Format: quantity x Card Name (SET CODE)
+      listContent += `${card.count}x ${card.name} (${card.set.toUpperCase()})\n`
+    }
+    
+    const dataBlob = new Blob([listContent], { type: 'text/plain' })
+    const url = URL.createObjectURL(dataBlob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `mtg-collection-archidekt-${new Date().toISOString().split('T')[0]}.txt`
+    link.click()
+    
+    URL.revokeObjectURL(url)
+    
+    await swal({
+      title: 'Exported to Archidekt!',
+      html: 'Your collection has been exported as TXT.<br><br>You can import this file into Archidekt by:<br>1. Go to <a href="https://www.archidekt.com" target="_blank" rel="noopener noreferrer">archidekt.com</a><br>2. Create or edit a deck<br>3. Use the import/paste function to add the cards',
+      icon: 'success',
+      timer: 35000,
+      timerProgressBar: true
+    })
+  } catch (err) {
+    await swal({
+      title: 'Error',
+      text: 'Error exporting to Archidekt: ' + (err instanceof Error ? err.message : 'Unknown error'),
+      icon: 'error'
+    })
+  }
+}
+
 const formatDate = (dateStr?: string) => {
   if (!dateStr) return 'Unknown'
   const date = new Date(dateStr)
@@ -234,6 +390,23 @@ onMounted(() => {
 .stat-actions {
   background: white;
   border: 2px solid #F0F0F0;
+}
+
+.dropdown-menu {
+  min-width: 180px;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  padding: 0.75rem 1rem !important;
+  transition: background-color 0.2s ease;
+}
+
+.dropdown-item:hover {
+  background-color: #F5F5F5;
 }
 
 .stat-icon {
