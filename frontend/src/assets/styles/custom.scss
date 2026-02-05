@@ -16,6 +16,9 @@ $shadow-sm: 0 4px 12px rgba(255, 107, 157, 0.15);
 $shadow-md: 0 8px 24px rgba(102, 126, 234, 0.2);
 $shadow-lg: 0 12px 40px rgba(102, 126, 234, 0.3);
 
+// ✨ IMPORTS ✨
+@import './sweetalert';
+
 // ✨ MIXINS ✨
 @mixin flex-center {
   display: flex;

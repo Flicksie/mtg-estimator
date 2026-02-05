@@ -75,10 +75,12 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import Swal from 'sweetalert2'
+import { useSwal } from '../composables/useSwal'
 import CollectionCardItem from '../components/CollectionCardItem.vue'
 import api from '../services/api'
 import type { Card } from '../types'
+
+const { fire: swal } = useSwal()
 
 const collection = ref<Card[]>([])
 
@@ -97,7 +99,7 @@ const loadCollection = async () => {
 }
 
 const removeCard = async (cardId: number) => {
-  const result = await Swal.fire({
+  const result = await swal({
     title: 'Remove Card?',
     text: 'This card will be removed from your collection',
     icon: 'warning',
@@ -114,7 +116,7 @@ const removeCard = async (cardId: number) => {
     await api.removeFromCollection(cardId)
     collection.value = collection.value.filter(c => c.id !== cardId)
     
-    await Swal.fire({
+    await swal({
       title: 'Removed!',
       text: 'Card removed from collection',
       icon: 'success',
@@ -122,7 +124,7 @@ const removeCard = async (cardId: number) => {
       timerProgressBar: true
     })
   } catch (err) {
-    await Swal.fire({
+    await swal({
       title: 'Error',
       text: 'Error removing card: ' + (err instanceof Error ? err.message : 'Unknown error'),
       icon: 'error',
@@ -132,7 +134,7 @@ const removeCard = async (cardId: number) => {
 }
 
 const clearCollection = async () => {
-  const result = await Swal.fire({
+  const result = await swal({
     title: 'Clear Collection?',
     text: 'This will remove all cards from your collection. This cannot be undone!',
     icon: 'warning',
@@ -149,7 +151,7 @@ const clearCollection = async () => {
     await api.clearCollection()
     collection.value = []
     
-    await Swal.fire({
+    await swal({
       title: 'Cleared!',
       text: 'Your collection has been cleared',
       icon: 'success',
@@ -157,7 +159,7 @@ const clearCollection = async () => {
       timerProgressBar: true
     })
   } catch (err) {
-    await Swal.fire({
+    await swal({
       title: 'Error',
       text: 'Error clearing collection: ' + (err instanceof Error ? err.message : 'Unknown error'),
       icon: 'error',
@@ -180,7 +182,7 @@ const exportCollection = async () => {
     
     URL.revokeObjectURL(url)
     
-    await Swal.fire({
+    await swal({
       title: 'Exported!',
       text: 'Your collection has been exported',
       icon: 'success',
@@ -188,7 +190,7 @@ const exportCollection = async () => {
       timerProgressBar: true
     })
   } catch (err) {
-    await Swal.fire({
+    await swal({
       title: 'Error',
       text: 'Error exporting collection: ' + (err instanceof Error ? err.message : 'Unknown error'),
       icon: 'error',

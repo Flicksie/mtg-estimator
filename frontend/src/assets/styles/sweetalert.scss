@@ -1,0 +1,75 @@
+// ✨ SWEETALERT2 CUSTOMIZATION ✨
+
+.swal-popup {
+  border-radius: 24px !important;
+  width: 320px !important;
+  box-shadow: 0 12px 40px rgba(102, 126, 234, 0.25) !important;
+  background: white !important;
+  padding: 1.5rem !important;
+}
+
+.swal-title {
+  font-size: 1.25rem !important;
+  font-weight: 800 !important;
+  color: #2C2C7C !important;
+  margin: 0 0 1rem 0 !important;
+}
+
+.swal-content {
+  font-size: 0.95rem !important;
+  color: #666688 !important;
+  line-height: 1.5 !important;
+}
+
+.swal-icon {
+  transform: scale(.6) !important;
+  margin: 0 auto 1rem !important;
+  
+  &.swal-icon--warning {
+    border-color: #FFB347 !important;
+    color: #FF8C47 !important;
+  }
+  
+  &.swal-icon--error {
+    border-color: #FF6B6B !important;
+    color: #FF6B6B !important;
+  }
+  
+  &.swal-icon--success {
+    border-color: #11D8A2 !important;
+    color: #11D8A2 !important;
+  }
+}
+
+.swal-btn-confirm {
+  border-radius: 16px !important;
+  padding: 0.75rem 1.5rem !important;
+  font-weight: 700 !important;
+  font-size: 0.95rem !important;
+  border: none !important;
+  background: linear-gradient(135deg, #FF6B9D 0%, #C06BFF 100%) !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(255, 107, 157, 0.3) !important;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  
+  &:hover {
+    box-shadow: 0 6px 16px rgba(255, 107, 157, 0.5) !important;
+    transform: translateY(-2px) !important;
+  }
+}
+
+.swal-btn-cancel {
+  border-radius: 16px !important;
+  padding: 0.75rem 1.5rem !important;
+  font-weight: 700 !important;
+  font-size: 0.95rem !important;
+  border: none !important;
+  background: #E8E8E8 !important;
+  color: #666688 !important;
+  box-shadow: none !important;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  
+  &:hover {
+    background: #D8D8D8 !important;
+  }
+}
