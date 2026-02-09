@@ -5,7 +5,6 @@ require "securerandom"
 
 module MTGEstimator
   class Action
-    # Shared sessions store (in-memory for simplicity)
     @@sessions = {}
 
     def self.sessions
@@ -34,7 +33,6 @@ module MTGEstimator
       response.finish
     end
 
-    # Override in subclasses
     def handle(request, response)
       raise NotImplementedError
     end
