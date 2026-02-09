@@ -6,7 +6,6 @@ require 'uri'
 require 'base64'
 require 'openssl'
 
-# OCRService - Service for extracting text from card images using OCR
 # Uses Gemini Vision (preferred) for title extraction; no local OCR dependencies.
 class OCRService
   def initialize(custom_key = nil)
@@ -128,11 +127,12 @@ class OCRService
     parsed = JSON.parse(response.body)
     puts "[Gemini->] raw_response_preview=#{response.body[0,2000]}"
     text = parsed.dig('candidates', 0, 'content', 'parts', 0, 'text') || '{}'
-    # Strip markdown fences if the model returned ```json ... ```
+
     if text.start_with?('```')
       text = text.gsub(/^```json\s*/i, '').gsub(/^```/, '').gsub(/```\s*$/, '')
     end
     puts "[Gemini] raw_text_response_preview=#{text[0,200]}"
+  
     JSON.parse(text) rescue { 'raw' => text }
   end
 end
