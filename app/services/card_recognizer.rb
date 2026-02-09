@@ -2,7 +2,6 @@
 
 require 'httparty'
 
-# CardRecognizer - Identifies MTG cards using the Scryfall API
 class CardRecognizer
   include HTTParty
   base_uri 'https://api.scryfall.com'
